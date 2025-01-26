@@ -20,4 +20,19 @@ export async function uploadImage(imageUrl: string): Promise<string> {
     console.error('Error uploading to Cloudinary:', error);
     throw error;
   }
+}
+
+export async function deleteImage(imageUrl: string): Promise<void> {
+  try {
+    // Extract public_id from the URL
+    const urlParts = imageUrl.split('/');
+    const filenameWithExtension = urlParts[urlParts.length - 1];
+    const publicId = `diary-entries/${filenameWithExtension.split('.')[0]}`;
+
+    // Delete the image
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error('Error deleting from Cloudinary:', error);
+    throw error;
+  }
 } 

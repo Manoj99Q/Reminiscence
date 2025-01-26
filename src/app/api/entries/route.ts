@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
-import { uploadImage } from '@/lib/cloudinary';
+import { uploadImage, deleteImage } from '@/lib/cloudinary';
 import { generateImage } from '@/lib/openai';
 import { DiaryEntry, DiaryEntryResponse } from '@/types/diary';
 import { jwtVerify } from 'jose';
@@ -126,6 +126,45 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching diary entries:', error);
     return NextResponse.json(
       { error: 'Failed to fetch diary entries' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const token = request.cookies.get('token')?.value;
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = await getUserIdFromToken(token);
+    const db = await getDb();
+    const entriesCollection = db.collection<DiaryEntry>('diary_entries');
+
+    // First, get all entries to delete their images
+    const entries = await entriesCollection
+      .find({ userId: new ObjectId(userId) })
+      .toArray();
+
+    // Delete all images from Cloudinary
+    await Promise.all(
+      entries.map(entry => deleteImage(entry.imageUrl))
+    );
+
+    // Then delete all entries from the database
+    const result = await entriesCollection.deleteMany({
+      userId: new ObjectId(userId),
+    });
+
+    return NextResponse.json({ 
+      success: true,
+      deletedCount: result.deletedCount 
+    });
+  } catch (error) {
+    console.error('Error deleting all entries:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete entries' },
       { status: 500 }
     );
   }

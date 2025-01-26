@@ -3,11 +3,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { DiaryEntryResponse } from '@/types/diary';
+import DiaryEntries from '@/components/DiaryEntries';
+import Link from 'next/link';
 
 export default function DiaryPage() {
   const [entries, setEntries] = useState<DiaryEntryResponse[]>([]);
   const [newEntry, setNewEntry] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -15,6 +18,19 @@ export default function DiaryPage() {
     if (!newEntry.trim()) return;
 
     try {
+      setIsSubmitting(true);
+      // Add temporary entry to show loading state
+      const tempId = Date.now().toString();
+      const tempEntry = {
+        id: tempId,
+        content: newEntry,
+        imageUrl: '',
+        date: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        isLoading: true
+      };
+      setEntries(prevEntries => [tempEntry, ...prevEntries]);
+
       const response = await fetch('/api/entries', {
         method: 'POST',
         headers: {
@@ -33,11 +49,18 @@ export default function DiaryPage() {
       }
 
       const entry = await response.json();
-      setEntries(prevEntries => [entry, ...prevEntries]);
+      // Replace temporary entry with real one
+      setEntries(prevEntries => prevEntries.map(e => 
+        e.id === tempId ? entry : e
+      ));
       setNewEntry('');
     } catch (error) {
       console.error('Error saving entry:', error);
+      // Remove temporary entry on error
+      setEntries(prevEntries => prevEntries.filter(e => !e.isLoading));
       alert('Failed to save your entry. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -88,12 +111,20 @@ export default function DiaryPage() {
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-900">My Visual Diary</h1>
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 text-sm text-red-600 hover:text-red-700"
-          >
-            Logout
-          </button>
+          <div className="flex items-center space-x-4">
+            <Link
+              href="/manage"
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
+            >
+              Manage Entries
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 text-sm text-red-600 hover:text-red-700"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </header>
 
@@ -121,26 +152,7 @@ export default function DiaryPage() {
 
           {/* Right Side - Entries List */}
           <div className="w-2/3">
-            <div className="space-y-6">
-              {entries.map((entry) => (
-                <div key={entry.id} className="bg-white p-6 rounded-lg shadow-md">
-                  <div className="mb-4">
-                    <p className="text-gray-600 text-sm">
-                      {new Date(entry.date).toLocaleDateString()}
-                    </p>
-                    <p className="mt-2 font-medium text-black text-base">{entry.content}</p>
-                  </div>
-                  <div className="mt-4 aspect-square w-full relative">
-                    <img
-                      src={entry.imageUrl}
-                      alt="Generated from entry"
-                      className="rounded-lg w-full h-full object-contain"
-                      loading="lazy"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <DiaryEntries entries={entries} />
           </div>
         </div>
       </div>
