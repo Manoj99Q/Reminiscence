@@ -2,16 +2,9 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { ObjectId } from 'mongodb';
 import { getDb } from '@/lib/mongodb';
-import { jwtVerify } from 'jose';
 import { deleteImage } from '@/lib/cloudinary';
 import { DiaryEntry } from '@/types/diary';
-
-// Helper to get user ID from token
-async function getUserIdFromToken(token: string): Promise<string> {
-  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-  const { payload } = await jwtVerify(token, secret);
-  return payload.userId as string;
-}
+import { getUserIdFromToken } from '@/lib/auth';
 
 export async function DELETE(
   request: NextRequest,

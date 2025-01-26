@@ -5,19 +5,12 @@ import { getDb } from '@/lib/mongodb';
 import { uploadImage, deleteImage } from '@/lib/cloudinary';
 import { generateImage } from '@/lib/openai';
 import { DiaryEntry, DiaryEntryResponse } from '@/types/diary';
-import { jwtVerify } from 'jose';
+import { getUserIdFromToken } from '@/lib/auth';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
-
-// Helper to get user ID from token
-async function getUserIdFromToken(token: string): Promise<string> {
-  const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-  const { payload } = await jwtVerify(token, secret);
-  return payload.userId as string;
-}
 
 // Helper to format entry for response
 function formatEntry(entry: DiaryEntry): DiaryEntryResponse {
