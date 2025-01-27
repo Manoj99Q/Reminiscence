@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
-  throw new Error('Please add your MongoDB URI to .env.local');
+  throw new Error('Please add your Mongo URI to .env.local');
 }
 
 const uri = process.env.MONGODB_URI;
@@ -11,6 +11,7 @@ const options = {
   socketTimeoutMS: 45000, // Close sockets after 45 seconds of inactivity
 };
 
+let client: MongoClient;
 let clientPromise: Promise<MongoClient>;
 
 if (process.env.NODE_ENV === 'development') {
@@ -21,31 +22,77 @@ if (process.env.NODE_ENV === 'development') {
   };
 
   if (!globalWithMongo._mongoClientPromise) {
-    const client = new MongoClient(uri, options);
-    globalWithMongo._mongoClientPromise = client.connect().then(async (client) => {
-      // Create indexes when connection is established
-      const db = client.db('Moments');
-      await db.collection('diary_entries').createIndex({ userId: 1 });
-      await db.collection('diary_entries').createIndex({ date: -1 }); // For sorting
-      return client;
-    });
+    client = new MongoClient(uri, options);
+    globalWithMongo._mongoClientPromise = client.connect();
   }
   clientPromise = globalWithMongo._mongoClientPromise;
 } else {
   // In production mode, it's best to not use a global variable.
-  const client = new MongoClient(uri, options);
-  clientPromise = client.connect().then(async (client) => {
-    // Create indexes in production too
-    const db = client.db('Moments');
-    await db.collection('diary_entries').createIndex({ userId: 1 });
-    await db.collection('diary_entries').createIndex({ date: -1 }); // For sorting
-    return client;
-  });
+  client = new MongoClient(uri, options);
+  clientPromise = client.connect();
 }
 
-export default clientPromise;
-
-export const getDb = async () => {
+export async function getDb() {
   const client = await clientPromise;
-  return client.db('Moments');
-}; 
+  const db = client.db();
+
+  // Ensure indexes exist
+  await ensureIndexes(db);
+
+  return db;
+}
+
+async function ensureIndexes(db: any) {
+  try {
+    const entriesCollection = db.collection('diary_entries');
+    
+    // Get existing indexes
+    const indexes = await entriesCollection.indexes();
+    const hasEntryDateIndex = indexes.some(
+      (index: any) => index.key && index.key.entryDate
+    );
+
+    // Create index if it doesn't exist
+    if (!hasEntryDateIndex) {
+      console.log('Creating index on entryDate...');
+      await entriesCollection.createIndex(
+        { entryDate: -1 },
+        { background: true }
+      );
+    }
+
+    // Also ensure we have an index on userId for efficient queries
+    const hasUserIdIndex = indexes.some(
+      (index: any) => index.key && index.key.userId
+    );
+
+    if (!hasUserIdIndex) {
+      console.log('Creating index on userId...');
+      await entriesCollection.createIndex(
+        { userId: 1 },
+        { background: true }
+      );
+    }
+
+    // Compound index for userId + entryDate for efficient sorted queries per user
+    const hasCompoundIndex = indexes.some(
+      (index: any) => 
+        index.key && 
+        index.key.userId && 
+        index.key.entryDate
+    );
+
+    if (!hasCompoundIndex) {
+      console.log('Creating compound index on userId + entryDate...');
+      await entriesCollection.createIndex(
+        { userId: 1, entryDate: -1 },
+        { background: true }
+      );
+    }
+  } catch (error) {
+    console.error('Error ensuring indexes:', error);
+    // Don't throw - we can still operate without indexes
+  }
+}
+
+export default clientPromise; 

@@ -85,67 +85,83 @@ export default function ManagePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
-        {/* Header */}
-        <div className="mb-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">Manage Entries</h1>
-          <div className="space-x-4">
-            <Link 
-              href="/diary"
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800"
-            >
-              Back to Diary
-            </Link>
-            <button
-              onClick={handleDeleteAll}
-              disabled={isDeleting || entries.length === 0}
-              className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete All'}
-            </button>
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50">
+      <header className="bg-white/70 backdrop-blur-sm sticky top-0 z-50 border-b border-amber-100">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-handwriting text-amber-800">Chrysalis</h1>
+              <span className="text-xs px-2 py-1 bg-amber-100 rounded-full text-amber-700">beta</span>
+            </div>
+            <div className="flex items-center space-x-6">
+              <Link
+                href="/diary"
+                className="text-sm font-medium text-amber-700 hover:text-amber-900 transition-colors"
+              >
+                Back to Diary
+              </Link>
+              <button
+                onClick={handleDeleteAll}
+                disabled={isDeleting || entries.length === 0}
+                className="text-sm font-medium px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete All'}
+              </button>
+            </div>
           </div>
         </div>
+      </header>
 
+      <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Table */}
-        <div className="bg-white shadow-md rounded-lg overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-100 overflow-hidden">
+          <table className="min-w-full divide-y divide-amber-200">
+            <thead className="bg-amber-50/50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                   Date
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
+                  Title
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                   Content
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-amber-700 uppercase tracking-wider">
                   Image
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-amber-700 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white/50 backdrop-blur-sm divide-y divide-amber-100">
               {entries.map((entry) => (
-                <tr key={entry.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(entry.date).toLocaleDateString()}
+                <tr key={entry.id} className="hover:bg-amber-50/50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-900">
+                    {new Date(entry.entryDate).toLocaleDateString('en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      year: 'numeric'
+                    })}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <p className="text-sm font-medium text-amber-900">{entry.title}</p>
                   </td>
                   <td className="px-6 py-4">
-                    <p className="text-sm text-gray-900 line-clamp-2">{entry.content}</p>
+                    <p className="text-sm text-amber-800 line-clamp-2">{entry.content}</p>
                   </td>
                   <td className="px-6 py-4">
                     <img 
                       src={entry.imageUrl} 
-                      alt="Entry" 
-                      className="h-16 w-16 object-cover rounded-md"
+                      alt="Entry visualization" 
+                      className="h-16 w-16 object-cover rounded-lg border border-amber-100"
                     />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleDelete(entry.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 transition-colors"
                     >
                       Delete
                     </button>
@@ -154,7 +170,7 @@ export default function ManagePage() {
               ))}
               {entries.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">
+                  <td colSpan={5} className="px-6 py-4 text-center text-sm text-amber-600">
                     No entries found
                   </td>
                 </tr>

@@ -17,32 +17,53 @@ function formatEntry(entry: DiaryEntry): DiaryEntryResponse {
   return {
     id: entry._id!.toString(),
     content: entry.content,
+    title: entry.title,
     imageUrl: entry.imageUrl,
-    date: entry.date.toISOString(),
+    entryDate: entry.entryDate.toISOString(),
     createdAt: entry.createdAt.toISOString(),
+    imagePrompt: entry.imagePrompt,
   };
 }
 
-// Helper to generate image prompt from content
-async function generateImagePrompt(content: string): Promise<string> {
+// Helper to generate title and image prompt from content
+async function generateTitleAndPrompt(content: string): Promise<{ title: string; imagePrompt: string }> {
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "user",
-          content: `I will give you an experience or moment I had, and you come up with an image generation prompt for the situation. Use suitable mood, style and aesthetics you feel would match the moment. You can be creative and artistic too but should match the moment. Here's my moment: "${content}"`
+          content: `Given this diary entry, please provide:
+1. A short, meaningful title (max 5 words)
+2. An image generation prompt that captures the mood and content
+
+The diary entry is: "${content}"
+
+Please respond in this format:
+TITLE: <the title>
+IMAGE_PROMPT: <the image prompt>
+
+Make the title personal and meaningful, and the image prompt artistic and detailed.`
         }
       ],
       temperature: 0.8,
-      max_tokens: 100,
+      max_tokens: 150,
     });
 
-    const imagePrompt = response.choices[0].message.content?.trim() || "A peaceful moment captured in time";
-    return imagePrompt;
+    const result = response.choices[0].message.content?.trim() || '';
+    const titleMatch = result.match(/TITLE: (.*)/);
+    const promptMatch = result.match(/IMAGE_PROMPT: (.*)/);
+
+    return {
+      title: titleMatch?.[1]?.trim() || "Untitled Moment",
+      imagePrompt: promptMatch?.[1]?.trim() || "A peaceful moment captured in time"
+    };
   } catch (error) {
-    console.error('OpenAI prompt generation error:', error);
-    return "A peaceful moment captured in time"; // Default fallback prompt
+    console.error('OpenAI generation error:', error);
+    return {
+      title: "Untitled Moment",
+      imagePrompt: "A peaceful moment captured in time"
+    };
   }
 }
 
@@ -53,7 +74,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { content } = await request.json();
+    const { content, entryDate } = await request.json();
     if (!content) {
       return NextResponse.json(
         { error: 'Content is required' },
@@ -63,14 +84,10 @@ export async function POST(request: NextRequest) {
 
     const userId = await getUserIdFromToken(token);
     
-    // Generate image prompt from content
-    const imagePrompt = await generateImagePrompt(content);
-    
-    // Generate image using DALL-E
-    const dalleImageUrl = await generateImage(imagePrompt);
-    
-    // Upload the DALL-E generated image to Cloudinary for permanent storage
-    const cloudinaryUrl = await uploadImage(dalleImageUrl);
+    // For testing: Use a placeholder title and Picsum image
+    const title = content.split(' ').slice(0, 3).join(' ') + '...';
+    const imageUrl = `https://picsum.photos/1024/1024?random=${Date.now()}`;
+    const imagePrompt = "Test image prompt";
 
     const db = await getDb();
     const entriesCollection = db.collection<DiaryEntry>('diary_entries');
@@ -78,8 +95,9 @@ export async function POST(request: NextRequest) {
     const entry: DiaryEntry = {
       userId: new ObjectId(userId),
       content,
-      imageUrl: cloudinaryUrl,
-      date: new Date(),
+      title,
+      imageUrl,
+      entryDate: new Date(entryDate || new Date()),
       createdAt: new Date(),
       imagePrompt,
     };
@@ -106,10 +124,10 @@ export async function GET(request: NextRequest) {
     const db = await getDb();
     const entriesCollection = db.collection<DiaryEntry>('diary_entries');
 
-    // Get all entries for the user, sorted by date descending
+    // Get all entries for the user, sorted by entryDate descending
     const entries = await entriesCollection
       .find({ userId: new ObjectId(userId) })
-      .sort({ date: -1 })
+      .sort({ entryDate: -1 })
       .toArray();
 
     // Format entries for response
