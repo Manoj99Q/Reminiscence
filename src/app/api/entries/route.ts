@@ -12,6 +12,9 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// Determine whether to use test data or OpenAI
+const useTestData = process.env.USE_TEST_DATA === 'true';
+
 // Helper to format entry for response
 function formatEntry(entry: DiaryEntry): DiaryEntryResponse {
   return {
@@ -27,6 +30,13 @@ function formatEntry(entry: DiaryEntry): DiaryEntryResponse {
 
 // Helper to generate title and image prompt from content
 async function generateTitleAndPrompt(content: string): Promise<{ title: string; imagePrompt: string }> {
+  if (useTestData) {
+    return {
+      title: content.split(' ').slice(0, 3).join(' ') + '...',
+      imagePrompt: 'Test image prompt'
+    };
+  }
+
   try {
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
@@ -83,11 +93,11 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = await getUserIdFromToken(token);
-    
-    // For testing: Use a placeholder title and Picsum image
-    const title = content.split(' ').slice(0, 3).join(' ') + '...';
-    const imageUrl = `https://picsum.photos/1024/1024?random=${Date.now()}`;
-    const imagePrompt = "Test image prompt";
+    const { title, imagePrompt } = await generateTitleAndPrompt(content);
+
+    const imageUrl = useTestData
+      ? `https://picsum.photos/1024/1024?random=${Date.now()}`
+      : await generateImage(imagePrompt);
 
     const db = await getDb();
     const entriesCollection = db.collection<DiaryEntry>('diary_entries');
@@ -127,7 +137,7 @@ export async function GET(request: NextRequest) {
     // Get all entries for the user, sorted by entryDate descending
     const entries = await entriesCollection
       .find({ userId: new ObjectId(userId) })
-      .sort({ entryDate: -1 })
+      .sort({ entryDate: -1, createdAt: -1 })
       .toArray();
 
     // Format entries for response

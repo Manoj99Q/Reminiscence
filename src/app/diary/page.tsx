@@ -6,43 +6,52 @@ import { DiaryEntryResponse } from '@/types/diary';
 import DiaryEntries from '@/components/DiaryEntries';
 import Link from 'next/link';
 
+// Helper function to compare dates for sorting
+function compareDates(a: DiaryEntryResponse, b: DiaryEntryResponse): number {
+  const dateCompare = new Date(b.entryDate).getTime() - new Date(a.entryDate).getTime();
+  if (dateCompare === 0) {
+    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  }
+  return dateCompare;
+}
+
 export default function DiaryPage() {
-  const [entries, setEntries] = useState<DiaryEntryResponse[]>([]);
+  const router = useRouter();
+  const [entries, setEntries] = useState<(DiaryEntryResponse & { isLoading?: boolean })[]>([]);
   const [newEntry, setNewEntry] = useState('');
   const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newEntry.trim()) return;
+    if (!newEntry.trim() || isSubmitting) return;
+
+    setIsSubmitting(true);
+    
+    // Create a temporary entry with loading state
+    const tempEntry: DiaryEntryResponse & { isLoading: boolean } = {
+      id: Date.now().toString(),
+      content: newEntry,
+      title: "Creating your memory...",
+      imageUrl: "",
+      entryDate: new Date(entryDate).toISOString(),
+      createdAt: new Date().toISOString(),
+      imagePrompt: "",
+      isLoading: true
+    };
+
+    // Add the temporary entry in the correct position
+    setEntries(prevEntries => {
+      const newEntries = [...prevEntries, tempEntry].sort(compareDates);
+      return newEntries;
+    });
 
     try {
-      setIsSubmitting(true);
-      // Add temporary entry to show loading state
-      const tempId = Date.now().toString();
-      const tempEntry = {
-        id: tempId,
-        content: newEntry,
-        title: "Creating your memory...",
-        imageUrl: '',
-        entryDate: new Date(entryDate).toISOString(),
-        createdAt: new Date().toISOString(),
-        isLoading: true
-      };
-      setEntries(prevEntries => [tempEntry, ...prevEntries]);
-
       const response = await fetch('/api/entries', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          content: newEntry,
-          entryDate: entryDate 
-        }),
-        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newEntry, entryDate }),
+        credentials: 'include'
       });
 
       if (!response.ok) {
@@ -50,19 +59,22 @@ export default function DiaryPage() {
           router.push('/login');
           return;
         }
-        throw new Error('Failed to save entry');
+        throw new Error('Failed to create entry');
       }
+      
+      const data = await response.json() as DiaryEntryResponse;
 
-      const entry = await response.json();
-      // Replace temporary entry with real one
-      setEntries(prevEntries => prevEntries.map(e => 
-        e.id === tempId ? entry : e
-      ));
+      // Replace the temporary entry with the real one, maintaining sort order
+      setEntries(prevEntries => {
+        const entriesWithoutTemp = prevEntries.filter(e => e.id !== tempEntry.id);
+        return [...entriesWithoutTemp, data].sort(compareDates);
+      });
+
       setNewEntry('');
     } catch (error) {
-      console.error('Error saving entry:', error);
-      // Remove temporary entry on error
-      setEntries(prevEntries => prevEntries.filter(e => !e.isLoading));
+      console.error('Error creating entry:', error);
+      // Remove the temporary entry if there was an error
+      setEntries(prevEntries => prevEntries.filter(e => e.id !== tempEntry.id));
       alert('Failed to save your entry. Please try again.');
     } finally {
       setIsSubmitting(false);
@@ -85,7 +97,6 @@ export default function DiaryPage() {
   useEffect(() => {
     const loadEntries = async () => {
       try {
-        setIsLoading(true);
         const response = await fetch('/api/entries', {
           credentials: 'include',
         });
@@ -99,11 +110,9 @@ export default function DiaryPage() {
         }
 
         const data = await response.json();
-        setEntries(data.entries);
+        setEntries(data.entries.sort(compareDates));
       } catch (error) {
         console.error('Error loading entries:', error);
-      } finally {
-        setIsLoading(false);
       }
     };
 
