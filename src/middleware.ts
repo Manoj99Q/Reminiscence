@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
+import { rateLimiter } from './lib/rate-limit';
 
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
+  // Apply rate limiting to all API routes
+  if (request.nextUrl.pathname.startsWith('/api')) {
+    const rateLimitResult = await rateLimiter(request);
+    if (rateLimitResult) return rateLimitResult;
+  }
+
   // Check if this is a path that should be protected
   if (request.nextUrl.pathname.startsWith('/diary') || 
       request.nextUrl.pathname.startsWith('/api/entries')) {
@@ -41,5 +48,5 @@ export async function middleware(request: NextRequest) {
 
 // Configure which routes to run middleware on
 export const config = {
-  matcher: ['/diary/:path*', '/api/entries/:path*'],
+  matcher: ['/diary/:path*', '/api/:path*'],
 }; 

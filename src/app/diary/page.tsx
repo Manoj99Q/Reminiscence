@@ -40,11 +40,8 @@ export default function DiaryPage() {
       isLoading: true
     };
 
-    // Add the temporary entry in the correct position
-    setEntries(prevEntries => {
-      const newEntries = [...prevEntries, tempEntry].sort(compareDates);
-      return newEntries;
-    });
+    // First add the temporary entry at the bottom
+    setEntries(prevEntries => [tempEntry, ...prevEntries]);
 
     try {
       const response = await fetch('/api/entries', {
@@ -64,11 +61,16 @@ export default function DiaryPage() {
       
       const data = await response.json() as DiaryEntryResponse;
 
-      // Replace the temporary entry with the real one, maintaining sort order
+      // Replace the temporary entry with the real one at the top
       setEntries(prevEntries => {
         const entriesWithoutTemp = prevEntries.filter(e => e.id !== tempEntry.id);
-        return [...entriesWithoutTemp, data].sort(compareDates);
+        return [data, ...entriesWithoutTemp];
       });
+
+    //   // After a delay, sort the entries into their correct position
+    //   setTimeout(() => {
+    //     setEntries(prevEntries => [...prevEntries].sort(compareDates));
+    //   }, 3000); // 3 seconds delay
 
       setNewEntry('');
     } catch (error) {

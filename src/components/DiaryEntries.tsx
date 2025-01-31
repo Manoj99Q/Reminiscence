@@ -1,15 +1,6 @@
 import { DiaryEntryResponse } from '@/types/diary';
 
-type ImagePosition = 'left' | 'right' | 'center';
-
-// Function to determine image position for each entry
-function getImagePosition(id: string): ImagePosition {
-  // Use the entry ID to deterministically assign a position
-  // Removing offset positions as they can cause overflow issues
-  const positions: ImagePosition[] = ['left', 'right', 'center'];
-  const index = parseInt(id, 16) % positions.length;
-  return positions[index];
-}
+type ImagePosition = 'left' | 'right';
 
 // Function to get image container classes based on position
 function getImageClasses(position: ImagePosition): string {
@@ -18,23 +9,28 @@ function getImageClasses(position: ImagePosition): string {
       return 'float-left mr-8 mb-4 w-2/5 relative z-10';
     case 'right':
       return 'float-right ml-8 mb-4 w-2/5 relative z-10';
-    case 'center':
-      return 'float-none w-2/5 mx-auto mb-4 relative z-10';
     default:
       return 'float-right ml-8 mb-4 w-2/5 relative z-10';
   }
 }
 
-interface DiaryEntryProps {
-  entry: DiaryEntryResponse & { isLoading?: boolean };
+// Function to get content wrapper classes based on position
+function getContentWrapperClasses(position: ImagePosition): string {
+  return 'relative';
 }
 
-function DiaryEntry({ entry }: DiaryEntryProps) {
-  const imagePosition = getImagePosition(entry.id);
+interface DiaryEntryProps {
+  entry: DiaryEntryResponse & { isLoading?: boolean };
+  index: number;
+}
+
+function DiaryEntry({ entry, index }: DiaryEntryProps) {
+  const imagePosition: ImagePosition = index % 2 === 0 ? 'left' : 'right';
   const imageClasses = getImageClasses(imagePosition);
+  const contentWrapperClasses = getContentWrapperClasses(imagePosition);
 
   return (
-    <div className="p-8 overflow-hidden">
+    <div className="p-8 border-b border-amber-100 last:border-b-0">
       {/* Title and Date Header */}
       <div className="mb-6 pr-4">
         <h2 className="font-handwriting text-2xl text-amber-800">{entry.title}</h2>
@@ -64,7 +60,7 @@ function DiaryEntry({ entry }: DiaryEntryProps) {
               <img
                 src={entry.imageUrl}
                 alt="Generated from entry"
-                className="rounded-xl w-full h-full object-cover border border-amber-100 float-left mr-8 mb-4"
+                className="rounded-xl w-full h-full object-cover border border-amber-100"
                 loading="lazy"
               />
             </div>
@@ -111,8 +107,8 @@ export default function DiaryEntries({ entries }: DiaryEntriesProps) {
   return (
     <div className="bg-[#fdfaf7] rounded-2xl shadow-lg border border-amber-100">
       <div>
-        {entries.map((entry) => (
-          <DiaryEntry key={entry.id} entry={entry} />
+        {entries.map((entry, index) => (
+          <DiaryEntry key={entry.id} entry={entry} index={index} />
         ))}
       </div>
     </div>
