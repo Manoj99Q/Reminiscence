@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { jwtVerify } from 'jose';
-import { rateLimiter } from './lib/rate-limit';
+import { rateLimiter, diaryEntryLimiter } from './lib/rate-limit';
 
 // This function can be marked `async` if using `await` inside
 export async function middleware(request: NextRequest) {
@@ -9,6 +9,12 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/api')) {
     const rateLimitResult = await rateLimiter(request);
     if (rateLimitResult) return rateLimitResult;
+
+    // Apply diary entry limit for POST requests to /api/entries
+    if (request.nextUrl.pathname === '/api/entries' && request.method === 'POST') {
+      const diaryLimitResult = await diaryEntryLimiter(request);
+      if (diaryLimitResult) return diaryLimitResult;
+    }
   }
 
   // Check if this is a path that should be protected

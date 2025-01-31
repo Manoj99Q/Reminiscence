@@ -93,11 +93,18 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = await getUserIdFromToken(token);
-    const { title, imagePrompt } = await generateTitleAndPrompt(content);
-
-    const imageUrl = useTestData
-      ? `https://picsum.photos/1024/1024?random=${Date.now()}`
-      : await generateImage(imagePrompt);
+    
+    let title, imagePrompt, imageUrl;
+    if (useTestData) {
+      title = content.split(' ').slice(0, 3).join(' ') + '...';
+      imagePrompt = 'Test image prompt';
+      imageUrl = `https://picsum.photos/1024/1024?random=${Date.now()}`;
+    } else {
+      const generated = await generateTitleAndPrompt(content);
+      title = generated.title;
+      imagePrompt = generated.imagePrompt;
+      imageUrl = await generateImage(imagePrompt);
+    }
 
     const db = await getDb();
     const entriesCollection = db.collection<DiaryEntry>('diary_entries');

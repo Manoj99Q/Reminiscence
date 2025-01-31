@@ -21,12 +21,14 @@ export default function DiaryPage() {
   const [newEntry, setNewEntry] = useState('');
   const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formError, setFormError] = useState<{ message: string; isRateLimit?: boolean } | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEntry.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
+    setFormError(null);
     
     // Create a temporary entry with loading state
     const tempEntry: DiaryEntryResponse & { isLoading: boolean } = {
@@ -40,7 +42,7 @@ export default function DiaryPage() {
       isLoading: true
     };
 
-    // First add the temporary entry at the bottom
+    // First add the temporary entry at the top
     setEntries(prevEntries => [tempEntry, ...prevEntries]);
 
     try {
@@ -51,15 +53,18 @@ export default function DiaryPage() {
         credentials: 'include'
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
         if (response.status === 401) {
           router.push('/login');
           return;
         }
-        throw new Error('Failed to create entry');
+        if (response.status === 429) {
+          throw new Error(data.error || 'Rate limit reached', { cause: 'rate_limit' });
+        }
+        throw new Error(data.error || 'Failed to create entry');
       }
-      
-      const data = await response.json() as DiaryEntryResponse;
 
       // Replace the temporary entry with the real one at the top
       setEntries(prevEntries => {
@@ -67,17 +72,16 @@ export default function DiaryPage() {
         return [data, ...entriesWithoutTemp];
       });
 
-    //   // After a delay, sort the entries into their correct position
-    //   setTimeout(() => {
-    //     setEntries(prevEntries => [...prevEntries].sort(compareDates));
-    //   }, 3000); // 3 seconds delay
-
       setNewEntry('');
-    } catch (error) {
-      console.error('Error creating entry:', error);
+    } catch (err: any) {
+      console.error('Error creating entry:', err);
       // Remove the temporary entry if there was an error
       setEntries(prevEntries => prevEntries.filter(e => e.id !== tempEntry.id));
-      alert('Failed to save your entry. Please try again.');
+      
+      setFormError({
+        message: err.message,
+        isRateLimit: err.cause === 'rate_limit'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -163,7 +167,35 @@ export default function DiaryPage() {
                   </span>
                 )}
               </div>
-              
+
+              {formError && (
+                <div className={`mb-6 p-4 rounded-xl ${formError.isRateLimit ? 'bg-amber-50 border-l-4 border-amber-400' : 'bg-red-50 border-l-4 border-red-400'}`}>
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      {formError.isRateLimit ? (
+                        <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="ml-3">
+                      <p className={`text-sm ${formError.isRateLimit ? 'text-amber-800' : 'text-red-800'}`}>
+                        {formError.message}
+                      </p>
+                      {formError.isRateLimit && (
+                        <p className="text-xs text-amber-600 mt-1">
+                          The limit will reset next week.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Date Input */}
               <div className="mb-6">
                 <label htmlFor="entryDate" className="block text-sm font-medium text-amber-700 mb-2">
