@@ -7,11 +7,17 @@ import { DiaryEntry } from '@/types/diary';
 import { getUserIdFromToken } from '@/lib/auth';
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  request: Request
 ) {
   try {
-    const token = request.cookies.get('token')?.value;
+    // Get the id from the URL
+    const id = request.url.split('/').pop();
+    if (!id) {
+      return NextResponse.json({ error: 'Invalid or missing id parameter' }, { status: 400 });
+    }
+
+    const req = request as NextRequest;
+    const token = req.cookies.get('token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -22,7 +28,7 @@ export async function DELETE(
 
     // First, find the entry to get the image URL
     const entry = await entriesCollection.findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: new ObjectId(userId),
     });
 
@@ -38,7 +44,7 @@ export async function DELETE(
 
     // Then delete the entry from the database
     const result = await entriesCollection.deleteOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: new ObjectId(userId),
     });
 
