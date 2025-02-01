@@ -27,8 +27,6 @@ export default function LoginPage() {
         throw new Error(data.error || 'Failed to login');
       }
 
-      // Store token in localStorage
-      localStorage.setItem('token', data.token);
       // Redirect to diary page
       router.push('/diary');
     } catch (err: any) {
