@@ -20,16 +20,15 @@ const handwriting = Indie_Flower({
 });
 
 export const metadata: Metadata = {
-  title: 'Chrysalis | Transform Your Memories',
-  description: 'A personal diary that transforms your written memories into beautiful visual experiences.',
+  title: 'Reminiscence | Your Personal Memory Journal',
+  description: 'Capture and preserve your memories with AI-generated illustrations',
+  applicationName: 'Reminiscence',
+  keywords: ['diary', 'journal', 'memories', 'AI', 'personal'],
+  authors: [{ name: 'Reminiscence Team' }],
+  viewport: 'width=device-width, initial-scale=1',
   icons: {
-    icon: [
-      {
-        url: '/chrysalis.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-  },
+    icon: '/favicon.ico',
+  }
 };
 
 export default function RootLayout({

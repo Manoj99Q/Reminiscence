@@ -34,7 +34,7 @@ if (process.env.NODE_ENV === 'development') {
 
 export async function getDb() {
   const client = await clientPromise;
-  const db = client.db();
+  const db = client.db('Reminiscence');
 
   // Ensure indexes exist
   await ensureIndexes(db);
