@@ -77,6 +77,17 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 py-12">
       <div className="max-w-2xl mx-auto px-4">
+        <div className="mb-6">
+          <button
+            onClick={() => router.push('/diary')}
+            className="text-amber-700 hover:text-amber-900 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Diary</span>
+          </button>
+        </div>
         <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-amber-100 p-8">
           <h1 className="text-2xl font-handwriting text-amber-800 mb-6">Personalize Your Experience</h1>
           

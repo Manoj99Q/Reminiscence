@@ -7,6 +7,7 @@ import { generateImage } from '@/lib/openai';
 import { DiaryEntry, DiaryEntryResponse } from '@/types/diary';
 import { getUserIdFromToken } from '@/lib/auth';
 import OpenAI from 'openai';
+import { UserProfile } from '@/types/user';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -29,7 +30,7 @@ function formatEntry(entry: DiaryEntry): DiaryEntryResponse {
 }
 
 // Helper to generate title and image prompt from content
-async function generateTitleAndPrompt(content: string): Promise<{ title: string; imagePrompt: string }> {
+async function generateTitleAndPrompt(content: string, userProfile?: UserProfile): Promise<{ title: string; imagePrompt: string }> {
   if (useTestData) {
     return {
       title: content.split(' ').slice(0, 3).join(' ') + '...',
@@ -38,22 +39,43 @@ async function generateTitleAndPrompt(content: string): Promise<{ title: string;
   }
 
   try {
+    // Create a profile context string if profile exists
+    let profileContext = '';
+    if (userProfile) {
+      const contextParts = [];
+      if (userProfile.gender) contextParts.push(`gender: ${userProfile.gender}`);
+      if (userProfile.ageRange) contextParts.push(`age range: ${userProfile.ageRange}`);
+      if (userProfile.ethnicity) contextParts.push(`ethnicity: ${userProfile.ethnicity}`);
+      if (contextParts.length > 0) {
+        profileContext = `\nContext about the diary writer: ${contextParts.join(', ')}.`;
+      }
+    }
+
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
       messages: [
         {
           role: "user",
-          content: `Given this diary entry, please provide:
+          content: `Given this diary entry and information about its writer, please provide:
 1. A short, meaningful title (max 5 words)
-2. An image generation prompt that captures the mood and content
+2. A stylized image generation prompt that artistically enhances reality
 
-The diary entry is: "${content}"
+The diary entry is: "${content}"${profileContext}
 
 Please respond in this format:
 TITLE: <the title>
 IMAGE_PROMPT: <the image prompt>
 
-Make the title personal and meaningful, and the image prompt artistic and detailed.`
+Make the title personal and meaningful. For the image prompt:
+- Create a recognizable scene but with artistic enhancement
+- Use a mix of realism and artistic style, like a beautiful illustration
+- Add subtle artistic elements: soft glows, gentle color gradients, elegant compositions
+- Consider these artistic styles: Studio Ghibli, stylized digital art, watercolor-inspired
+- Enhance the mood with: lighting effects, color harmonies, atmospheric elements
+- Keep main subjects recognizable while adding artistic flair
+- Subtly incorporate the writer's characteristics
+- Focus on creating a dreamy, enhanced version of reality
+- Add artistic touches like: soft edges, gentle light rays, delicate details, subtle textures`
         }
       ],
       temperature: 0.8,
@@ -66,13 +88,13 @@ Make the title personal and meaningful, and the image prompt artistic and detail
 
     return {
       title: titleMatch?.[1]?.trim() || "Untitled Moment",
-      imagePrompt: promptMatch?.[1]?.trim() || "A peaceful moment captured in time"
+      imagePrompt: promptMatch?.[1]?.trim() || "A dreamy scene with soft lighting and gentle artistic touches, maintaining a recognizable but enhanced reality"
     };
   } catch (error) {
     console.error('OpenAI generation error:', error);
     return {
       title: "Untitled Moment",
-      imagePrompt: "A peaceful moment captured in time"
+      imagePrompt: "A dreamy scene with soft lighting and gentle artistic touches, maintaining a recognizable but enhanced reality"
     };
   }
 }
@@ -93,6 +115,11 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = await getUserIdFromToken(token);
+    const db = await getDb();
+    
+    // Get user profile
+    const profilesCollection = db.collection<UserProfile>('user_profiles');
+    const userProfile = await profilesCollection.findOne({ userId: new ObjectId(userId) });
     
     let title, imagePrompt, imageUrl;
     if (useTestData) {
@@ -100,13 +127,12 @@ export async function POST(request: NextRequest) {
       imagePrompt = 'Test image prompt';
       imageUrl = `https://picsum.photos/1024/1024?random=${Date.now()}`;
     } else {
-      const generated = await generateTitleAndPrompt(content);
+      const generated = await generateTitleAndPrompt(content, userProfile || undefined);
       title = generated.title;
       imagePrompt = generated.imagePrompt;
       imageUrl = await generateImage(imagePrompt);
     }
 
-    const db = await getDb();
     const entriesCollection = db.collection<DiaryEntry>('diary_entries');
 
     const entry: DiaryEntry = {

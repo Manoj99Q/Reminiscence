@@ -45,7 +45,10 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = await getUserIdFromToken(token);
-    const profile = await request.json();
+    const profileData = await request.json();
+
+    // Remove _id from the profile data if it exists
+    const { _id, ...profileWithoutId } = profileData;
 
     const db = await getDb();
     const profilesCollection = db.collection<UserProfile>('user_profiles');
@@ -55,7 +58,7 @@ export async function POST(request: NextRequest) {
       { userId: new ObjectId(userId) },
       { 
         $set: { 
-          ...profile,
+          ...profileWithoutId,
           userId: new ObjectId(userId),
           updatedAt: new Date()
         } 

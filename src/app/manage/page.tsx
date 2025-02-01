@@ -90,7 +90,7 @@ export default function ManagePage() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-handwriting text-amber-800">Chrysalis</h1>
+              <h1 className="text-3xl font-handwriting text-amber-800">Reminiscence</h1>
               <span className="text-xs px-2 py-1 bg-amber-100 rounded-full text-amber-700">beta</span>
             </div>
             <div className="flex items-center space-x-6">
