@@ -1,10 +1,11 @@
 import { MongoClient } from 'mongodb';
 
-if (!process.env.MONGODB_URI) {
+// Only throw the error if we're not building and the URI is missing
+if (process.env.NODE_ENV !== 'production' && !process.env.MONGODB_URI && process.env.NEXT_PHASE !== 'phase-production-build') {
   throw new Error('Please add your Mongo URI to .env.local');
 }
 
-const uri = process.env.MONGODB_URI;
+const uri = process.env.MONGODB_URI || 'mongodb://placeholder-during-build';
 const options = {
   maxPoolSize: 10, // Maintain up to 10 socket connections
   serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds
