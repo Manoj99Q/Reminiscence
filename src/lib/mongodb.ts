@@ -45,14 +45,17 @@ export async function getDb() {
 async function ensureIndexes(db: any) {
   try {
     const entriesCollection = db.collection('diary_entries');
+    const profilesCollection = db.collection('user_profiles');
     
     // Get existing indexes
-    const indexes = await entriesCollection.indexes();
-    const hasEntryDateIndex = indexes.some(
+    const entriesIndexes = await entriesCollection.indexes();
+    const profilesIndexes = await profilesCollection.indexes();
+
+    // Check and create indexes for diary entries
+    const hasEntryDateIndex = entriesIndexes.some(
       (index: any) => index.key && index.key.entryDate
     );
 
-    // Create index if it doesn't exist
     if (!hasEntryDateIndex) {
       console.log('Creating index on entryDate...');
       await entriesCollection.createIndex(
@@ -61,8 +64,7 @@ async function ensureIndexes(db: any) {
       );
     }
 
-    // Also ensure we have an index on userId for efficient queries
-    const hasUserIdIndex = indexes.some(
+    const hasUserIdIndex = entriesIndexes.some(
       (index: any) => index.key && index.key.userId
     );
 
@@ -74,8 +76,7 @@ async function ensureIndexes(db: any) {
       );
     }
 
-    // Compound index for userId + entryDate for efficient sorted queries per user
-    const hasCompoundIndex = indexes.some(
+    const hasCompoundIndex = entriesIndexes.some(
       (index: any) => 
         index.key && 
         index.key.userId && 
@@ -87,6 +88,19 @@ async function ensureIndexes(db: any) {
       await entriesCollection.createIndex(
         { userId: 1, entryDate: -1 },
         { background: true }
+      );
+    }
+
+    // Check and create index for user profiles
+    const hasProfileUserIdIndex = profilesIndexes.some(
+      (index: any) => index.key && index.key.userId
+    );
+
+    if (!hasProfileUserIdIndex) {
+      console.log('Creating index on userId for user_profiles...');
+      await profilesCollection.createIndex(
+        { userId: 1 },
+        { background: true, unique: true }
       );
     }
   } catch (error) {

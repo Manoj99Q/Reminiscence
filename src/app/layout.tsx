@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Indie_Flower } from "next/font/google";
 import "./globals.css";
@@ -19,15 +19,20 @@ const handwriting = Indie_Flower({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   title: 'Reminiscence | Your Personal Memory Journal',
   description: 'Capture and preserve your memories with AI-generated illustrations',
   applicationName: 'Reminiscence',
   keywords: ['diary', 'journal', 'memories', 'AI', 'personal'],
   authors: [{ name: 'Reminiscence Team' }],
-  viewport: 'width=device-width, initial-scale=1',
   icons: {
-    icon: '/favicon.ico',
+    icon: { url: '/logo.png', type: 'image/png' },
+    shortcut: { url: '/logo.png', type: 'image/png' },
   }
 };
 
