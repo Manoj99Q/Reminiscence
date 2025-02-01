@@ -160,7 +160,10 @@ export default function DiaryPage() {
           <div className="w-1/3 sticky top-24">
             <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-amber-100">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-handwriting text-amber-800">New Memory</h2>
+                <div>
+                  <h2 className="text-xl font-handwriting text-amber-800">New Memory</h2>
+                  <p className="text-xs text-amber-600 mt-1">Beta: Limited to 5 entries per week</p>
+                </div>
                 {isSubmitting && (
                   <span className="text-xs px-3 py-1 bg-amber-100 rounded-full text-amber-700 animate-pulse">
                     Creating...
