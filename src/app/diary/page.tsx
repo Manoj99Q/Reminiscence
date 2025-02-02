@@ -39,6 +39,8 @@ export default function DiaryPage() {
       entryDate: new Date(entryDate).toISOString(),
       createdAt: new Date().toISOString(),
       imagePrompt: "",
+      stylizedContent: newEntry,  // Use original content as placeholder
+      authorStyle: "Processing...",  // Placeholder while loading
       isLoading: true
     };
 
