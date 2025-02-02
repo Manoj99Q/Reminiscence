@@ -81,15 +81,24 @@ function DiaryEntry({ entry, index }: DiaryEntryProps) {
               backgroundPosition: '0 8px, 32px 0'
             }}
           />
-          <p 
-            className="font-handwriting text-lg leading-8 text-gray-800 whitespace-pre-wrap pl-10"
-            style={{
-              lineHeight: '32px',
-              paddingTop: '8px'
-            }}
-          >
-            {entry.content}
-          </p>
+          <div>
+            {/* Author Style Attribution */}
+            {entry.authorStyle && (
+              <p className="font-handwriting text-sm text-amber-600 italic mb-2 pl-10">
+                Written in the style of {entry.authorStyle}
+              </p>
+            )}
+            {/* Stylized Content */}
+            <p 
+              className="font-handwriting text-lg leading-8 text-gray-800 whitespace-pre-wrap pl-10"
+              style={{
+                lineHeight: '32px',
+                paddingTop: '8px'
+              }}
+            >
+              {entry.stylizedContent || entry.content}
+            </p>
+          </div>
         </div>
 
         {/* Clear float */}

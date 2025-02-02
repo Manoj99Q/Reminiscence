@@ -26,6 +26,8 @@ function formatEntry(entry: DiaryEntry): DiaryEntryResponse {
     entryDate: entry.entryDate.toISOString(),
     createdAt: entry.createdAt.toISOString(),
     imagePrompt: entry.imagePrompt,
+    stylizedContent: entry.stylizedContent,
+    authorStyle: entry.authorStyle,
   };
 }
 
@@ -52,7 +54,7 @@ async function generateTitleAndPrompt(content: string, userProfile?: UserProfile
     }
 
     const response = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
+      model: "gpt-4o",
       messages: [
         {
           role: "user",
@@ -99,6 +101,60 @@ Make the title personal and meaningful. For the image prompt:
   }
 }
 
+// Helper to generate stylized content
+async function generateStylizedContent(content: string): Promise<{ stylizedContent: string; authorStyle: string }> {
+  if (useTestData) {
+    return {
+      stylizedContent: content,
+      authorStyle: 'Test Author Style'
+    };
+  }
+
+  try {
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: `Please rewrite this diary entry in the style of a prominent author of your choice. Choose an author whose style would best match the mood and content of the entry.
+
+The diary entry is: "${content}"
+
+Please respond in this format:
+AUTHOR: <author name and brief style description>
+STYLIZED_CONTENT: <the rewritten content>
+
+Guidelines:
+- Choose from renowned authors known for their distinctive writing styles
+- Maintain the core message and emotions of the original entry
+- Adapt the vocabulary, sentence structure, and tone to match the chosen author
+- Keep the length similar to the original
+- Make sure the style transformation is noticeable but not overly exaggerated
+- Consider authors like Virginia Woolf, Ernest Hemingway, Jane Austen, Gabriel García Márquez, Sylvia Plath, or other distinctive voices
+- Match the emotional tone of the original entry with an appropriate author's style`
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    const result = response.choices[0].message.content?.trim() || '';
+    const authorMatch = result.match(/AUTHOR: (.*)/);
+    const contentMatch = result.match(/STYLIZED_CONTENT: ([\s\S]*?)(?=\n\n|$)/);
+
+    return {
+      authorStyle: authorMatch?.[1]?.trim() || "Unknown Author Style",
+      stylizedContent: contentMatch?.[1]?.trim() || content
+    };
+  } catch (error) {
+    console.error('OpenAI stylization error:', error);
+    return {
+      authorStyle: "Original Style",
+      stylizedContent: content
+    };
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const token = request.cookies.get('token')?.value;
@@ -121,16 +177,21 @@ export async function POST(request: NextRequest) {
     const profilesCollection = db.collection<UserProfile>('user_profiles');
     const userProfile = await profilesCollection.findOne({ userId: new ObjectId(userId) });
     
-    let title, imagePrompt, imageUrl;
+    let title, imagePrompt, imageUrl, stylizedContent, authorStyle;
     if (useTestData) {
       title = content.split(' ').slice(0, 3).join(' ') + '...';
       imagePrompt = 'Test image prompt';
       imageUrl = `https://picsum.photos/1024/1024?random=${Date.now()}`;
+      stylizedContent = content;
+      authorStyle = 'Test Author Style';
     } else {
       const generated = await generateTitleAndPrompt(content, userProfile || undefined);
+      const stylized = await generateStylizedContent(content);
       title = generated.title;
       imagePrompt = generated.imagePrompt;
       imageUrl = await generateImage(imagePrompt);
+      stylizedContent = stylized.stylizedContent;
+      authorStyle = stylized.authorStyle;
     }
 
     const entriesCollection = db.collection<DiaryEntry>('diary_entries');
@@ -143,6 +204,8 @@ export async function POST(request: NextRequest) {
       entryDate: new Date(entryDate || new Date()),
       createdAt: new Date(),
       imagePrompt,
+      stylizedContent,
+      authorStyle,
     };
 
     const result = await entriesCollection.insertOne(entry);
