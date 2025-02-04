@@ -189,7 +189,8 @@ export async function POST(request: NextRequest) {
       const stylized = await generateStylizedContent(content);
       title = generated.title;
       imagePrompt = generated.imagePrompt;
-      imageUrl = await generateImage(imagePrompt);
+      const generatedImageUrl = await generateImage(imagePrompt);
+      imageUrl = await uploadImage(generatedImageUrl);
       stylizedContent = stylized.stylizedContent;
       authorStyle = stylized.authorStyle;
     }
