@@ -9,7 +9,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@auth/mongodb-adapter": "^3.7.4",
     "@upstash/redis": "^1.34.3",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
@@ -19,7 +18,6 @@
     "limiter": "^3.0.0",
     "mongodb": "^6.13.0",
     "next": "15.1.6",
-    "next-auth": "^4.24.11",
     "openai": "^4.80.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
