@@ -6,16 +6,10 @@ import { uploadImage, deleteImage } from '@/lib/cloudinary';
 import { generateImage } from '@/lib/openai';
 import { DiaryEntry, DiaryEntryResponse } from '@/types/diary';
 import { getUserIdFromToken } from '@/lib/auth';
-import OpenAI from 'openai';
 import { UserProfile } from '@/types/user';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 // Determine whether to use test data or OpenAI
-// Fallback to true if not set (for development)
-const useTestData = process.env.USE_TEST_DATA === 'true' || !process.env.USE_TEST_DATA;
+const useTestData = process.env.USE_TEST_DATA === 'true';
 console.log('Environment check - USE_TEST_DATA:', process.env.USE_TEST_DATA, 'useTestData:', useTestData);
 
 // Helper to format entry for response
@@ -37,129 +31,7 @@ function formatEntry(entry: DiaryEntry): DiaryEntryResponse {
   };
 }
 
-// Helper to generate title and image prompt from content
-async function generateTitleAndPrompt(content: string, userProfile?: UserProfile): Promise<{ title: string; imagePrompt: string }> {
-  if (useTestData) {
-    return {
-      title: content.split(' ').slice(0, 3).join(' ') + '...',
-      imagePrompt: 'Test image prompt'
-    };
-  }
-
-  try {
-    // Create a profile context string if profile exists
-    let profileContext = '';
-    if (userProfile) {
-      const contextParts = [];
-      if (userProfile.gender) contextParts.push(`gender: ${userProfile.gender}`);
-      if (userProfile.ageRange) contextParts.push(`age range: ${userProfile.ageRange}`);
-      if (userProfile.ethnicity) contextParts.push(`ethnicity: ${userProfile.ethnicity}`);
-      if (contextParts.length > 0) {
-        profileContext = `\nContext about the diary writer: ${contextParts.join(', ')}.`;
-      }
-    }
-
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: `Given this diary entry and information about its writer, please provide:
-1. A short, meaningful title (max 5 words)
-2. A stylized image generation prompt that artistically enhances reality
-
-The diary entry is: "${content}"${profileContext}
-
-Please respond in this format:
-TITLE: <the title>
-IMAGE_PROMPT: <the image prompt>
-
-Make the title personal and meaningful. For the image prompt:
-- Create a recognizable scene but with artistic enhancement
-- Use a mix of realism and artistic style, like a beautiful illustration
-- Add subtle artistic elements: soft glows, gentle color gradients, elegant compositions
-- Consider these artistic styles: Studio Ghibli, stylized digital art, watercolor-inspired
-- Enhance the mood with: lighting effects, color harmonies, atmospheric elements
-- Keep main subjects recognizable while adding artistic flair
-- Subtly incorporate the writer's characteristics
-- Focus on creating a dreamy, enhanced version of reality
-- Add artistic touches like: soft edges, gentle light rays, delicate details, subtle textures`
-        }
-      ],
-      temperature: 0.8,
-      max_tokens: 150,
-    });
-
-    const result = response.choices[0].message.content?.trim() || '';
-    const titleMatch = result.match(/TITLE: (.*)/);
-    const promptMatch = result.match(/IMAGE_PROMPT: (.*)/);
-
-    return {
-      title: titleMatch?.[1]?.trim() || "Untitled Moment",
-      imagePrompt: promptMatch?.[1]?.trim() || "A dreamy scene with soft lighting and gentle artistic touches, maintaining a recognizable but enhanced reality"
-    };
-  } catch (error) {
-    console.error('OpenAI generation error:', error);
-    return {
-      title: "Untitled Moment",
-      imagePrompt: "A dreamy scene with soft lighting and gentle artistic touches, maintaining a recognizable but enhanced reality"
-    };
-  }
-}
-
-// Helper to generate stylized content
-async function generateStylizedContent(content: string): Promise<{ stylizedContent: string; authorStyle: string }> {
-  if (useTestData) {
-    return {
-      stylizedContent: content,
-      authorStyle: 'Test Author Style'
-    };
-  }
-
-  try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: `Please rewrite this diary entry in the style of a prominent author of your choice. Choose an author whose style would best match the mood and content of the entry.
-
-The diary entry is: "${content}"
-
-Please respond in this format:
-AUTHOR: <author name and brief style description>
-STYLIZED_CONTENT: <the rewritten content>
-
-Guidelines:
-- Choose from renowned authors known for their distinctive writing styles
-- Maintain the core message and emotions of the original entry
-- Adapt the vocabulary, sentence structure, and tone to match the chosen author
-- Keep the length similar to the original
-- Make sure the style transformation is noticeable but not overly exaggerated
-- Consider authors like Virginia Woolf, Ernest Hemingway, Jane Austen, Gabriel García Márquez, Sylvia Plath, or other distinctive voices
-- Match the emotional tone of the original entry with an appropriate author's style`
-        }
-      ],
-      temperature: 0.7,
-      max_tokens: 1000,
-    });
-
-    const result = response.choices[0].message.content?.trim() || '';
-    const authorMatch = result.match(/AUTHOR: (.*)/);
-    const contentMatch = result.match(/STYLIZED_CONTENT: ([\s\S]*?)(?=\n\n|$)/);
-
-    return {
-      authorStyle: authorMatch?.[1]?.trim() || "Unknown Author Style",
-      stylizedContent: contentMatch?.[1]?.trim() || content
-    };
-  } catch (error) {
-    console.error('OpenAI stylization error:', error);
-    return {
-      authorStyle: "Original Style",
-      stylizedContent: content
-    };
-  }
-}
+// Note: OpenAI functions removed - now using simple text processing and Hugging Face for images
 
 export async function POST(request: NextRequest) {
   try {
@@ -189,7 +61,7 @@ export async function POST(request: NextRequest) {
     
     // Get user profile
     console.log('POST /api/entries - Getting user profile');
-    const profilesCollection = db.collection<UserProfile>('user_profiles');
+    const profilesCollection = (db as any).collection('user_profiles');
     // Use string userId for mock database, ObjectId for real MongoDB
     const userProfile = await profilesCollection.findOne({ userId: useTestData ? userId : new ObjectId(userId) });
     console.log('POST /api/entries - User profile:', userProfile);
@@ -198,29 +70,81 @@ export async function POST(request: NextRequest) {
     console.log('POST /api/entries - useTestData:', useTestData);
     if (useTestData) {
       console.log('POST /api/entries - Using test data');
-      title = content.split(' ').slice(0, 3).join(' ') + '...';
-      imagePrompt = 'Test image prompt';
-      imageUrl = `https://picsum.photos/1024/1024?random=${Date.now()}`;
-      stylizedContent = content;
-      authorStyle = 'Test Author Style';
+      // Generate a more meaningful title
+      const words = content.split(' ').filter((word: string) => word.length > 0);
+      if (words.length <= 3) {
+        title = content;
+      } else {
+        title = words.slice(0, 4).join(' ') + (words.length > 4 ? '...' : '');
+      }
+      
+      // Generate a more relevant image based on content keywords
+      const keywords = content.toLowerCase().split(' ').filter((word: string) => 
+        word.length > 3 && 
+        !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'man', 'oil', 'sit', 'try', 'use', 'war', 'why', 'yes', 'yet', 'you'].includes(word)
+      );
+      
+      // Create a more relevant image URL based on content
+      const mainKeyword = keywords[0] || 'nature';
+      imagePrompt = `A beautiful artistic image related to ${mainKeyword}`;
+      
+      // Use Lorem Picsum with keyword-based seeding for more relevant images
+      // This creates deterministic but varied images based on content
+      const seed = mainKeyword.split('').reduce((acc: number, char: string) => acc + char.charCodeAt(0), 0);
+      imageUrl = `https://picsum.photos/seed/${mainKeyword}-${seed}/1024/1024`;
+      
+      console.log('POST /api/entries - Generated image URL:', imageUrl);
+      console.log('POST /api/entries - Main keyword:', mainKeyword, 'Seed:', seed);
+      
+      // Generate more interesting stylized content
+      const styles = [
+        'Ernest Hemingway', 'Virginia Woolf', 'Jane Austen', 'Gabriel García Márquez', 
+        'Sylvia Plath', 'Maya Angelou', 'Mark Twain', 'Toni Morrison'
+      ];
+      const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+      
+      stylizedContent = `"${content}" - A moment captured in the style of ${randomStyle}`;
+      authorStyle = `Inspired by ${randomStyle}`;
     } else {
-      console.log('POST /api/entries - Using OpenAI/Cloudinary');
-      const generated = await generateTitleAndPrompt(content, userProfile || undefined);
-      const stylized = await generateStylizedContent(content);
-      title = generated.title;
-      imagePrompt = generated.imagePrompt;
+      console.log('POST /api/entries - Using Hugging Face/Cloudinary');
+      
+      // Generate title from content (simple text processing)
+      const words = content.split(' ').filter((word: string) => word.length > 0);
+      if (words.length <= 3) {
+        title = content;
+      } else {
+        title = words.slice(0, 4).join(' ') + (words.length > 4 ? '...' : '');
+      }
+      
+      // Generate image prompt from content
+      const keywords = content.toLowerCase().split(' ').filter((word: string) => 
+        word.length > 3 && 
+        !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'man', 'oil', 'sit', 'try', 'use', 'war', 'why', 'yes', 'yet', 'you'].includes(word)
+      );
+      
+      const mainKeyword = keywords[0] || 'nature';
+      imagePrompt = `A beautiful artistic image related to ${mainKeyword}, dreamy scene with soft lighting and gentle artistic touches`;
+      
+      // Generate stylized content (simple author style simulation)
+      const styles = [
+        'Ernest Hemingway', 'Virginia Woolf', 'Jane Austen', 'Gabriel García Márquez', 
+        'Sylvia Plath', 'Maya Angelou', 'Mark Twain', 'Toni Morrison'
+      ];
+      const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+      stylizedContent = `"${content}" - A moment captured in the style of ${randomStyle}`;
+      authorStyle = `Inspired by ${randomStyle}`;
+      
+      // Generate image using Hugging Face
       const generatedImageUrl = await generateImage(imagePrompt);
       imageUrl = await uploadImage(generatedImageUrl);
-      stylizedContent = stylized.stylizedContent;
-      authorStyle = stylized.authorStyle;
     }
 
     console.log('POST /api/entries - Generated data:', { title, imageUrl: imageUrl?.substring(0, 50) + '...' });
 
-    const entriesCollection = db.collection<DiaryEntry>('diary_entries');
+    const entriesCollection = (db as any).collection('diary_entries');
 
     const entry: DiaryEntry = {
-      userId: useTestData ? userId : new ObjectId(userId),
+      userId: useTestData ? userId as any : new ObjectId(userId),
       content,
       title,
       imageUrl,
@@ -261,7 +185,7 @@ export async function GET(request: NextRequest) {
 
     const userId = await getUserIdFromToken(token);
     const db = await getDb();
-    const entriesCollection = db.collection<DiaryEntry>('diary_entries');
+    const entriesCollection = (db as any).collection('diary_entries');
 
     // Get all entries for the user, sorted by entryDate descending
     const entries = await entriesCollection
@@ -290,7 +214,7 @@ export async function DELETE(request: NextRequest) {
 
     const userId = await getUserIdFromToken(token);
     const db = await getDb();
-    const entriesCollection = db.collection<DiaryEntry>('diary_entries');
+    const entriesCollection = (db as any).collection('diary_entries');
 
     // First, get all entries to delete their images
     const entries = await entriesCollection
@@ -299,7 +223,7 @@ export async function DELETE(request: NextRequest) {
 
     // Delete all images from Cloudinary
     await Promise.all(
-      entries.map(entry => deleteImage(entry.imageUrl))
+      entries.map((entry: any) => deleteImage(entry.imageUrl))
     );
 
     // Then delete all entries from the database

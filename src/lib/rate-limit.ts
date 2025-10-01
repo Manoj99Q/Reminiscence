@@ -15,7 +15,7 @@ const REQUESTS_PER_MINUTE = 60;  // Adjust these values based on your needs
 const WINDOW_MS = 60 * 1000;     // 1 minute window
 
 // Configure diary entry limits
-const DIARY_ENTRIES_PER_WEEK = 5;
+const DIARY_ENTRIES_PER_WEEK = 50; // Increased from 5 to 50
 const WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;  // 7 days in milliseconds
 
 // Helper function to increment and check rate limit
@@ -68,6 +68,11 @@ export async function rateLimiter(request: NextRequest) {
 export async function diaryEntryLimiter(request: NextRequest) {
     // If Redis is not configured, skip diary entry limiting
     if (!redis) return null;
+    
+    // Skip rate limiting in development
+    if (process.env.NODE_ENV === 'development') {
+        return null;
+    }
     try {
         const token = request.cookies.get('token');
         if (!token) return null; // Let auth middleware handle this case

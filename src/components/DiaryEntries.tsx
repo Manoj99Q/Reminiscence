@@ -62,6 +62,11 @@ function DiaryEntry({ entry, index }: DiaryEntryProps) {
                 alt="Generated from entry"
                 className="rounded-xl w-full h-full object-cover border border-amber-100"
                 loading="lazy"
+                onError={(e) => {
+                  console.error('Image failed to load:', entry.imageUrl);
+                  // Fallback to a default image
+                  (e.target as HTMLImageElement).src = `https://picsum.photos/1024/1024?random=${Date.now()}`;
+                }}
               />
             </div>
           )}
