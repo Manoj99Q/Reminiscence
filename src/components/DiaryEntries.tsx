@@ -30,11 +30,11 @@ function DiaryEntry({ entry, index }: DiaryEntryProps) {
   const contentWrapperClasses = getContentWrapperClasses(imagePosition);
 
   return (
-    <div className="p-8 border-b border-amber-100 last:border-b-0">
+    <div className="p-8 border-b border-gray-200 last:border-b-0">
       {/* Title and Date Header */}
       <div className="mb-6 pr-4">
-        <h2 className="font-handwriting text-2xl text-amber-800">{entry.title}</h2>
-        <p className="font-handwriting text-sm text-amber-600 italic">
+        <h2 className="font-handwriting text-2xl text-gray-900">{entry.title}</h2>
+        <p className="font-handwriting text-sm text-gray-600 italic">
           {new Date(entry.entryDate).toLocaleDateString('en-US', {
             weekday: 'long',
             year: 'numeric',
@@ -49,10 +49,10 @@ function DiaryEntry({ entry, index }: DiaryEntryProps) {
         {/* Image Section - Dynamic Position */}
         <div className={imageClasses}>
           {entry.isLoading ? (
-            <div className="aspect-square w-full flex items-center justify-center bg-[#fdfaf7]">
+            <div className="aspect-square w-full flex items-center justify-center bg-gray-50">
               <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-500 mx-auto mb-2"></div>
-                <p className="font-handwriting text-amber-600">Capturing this moment...</p>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-500 mx-auto mb-2"></div>
+                <p className="font-handwriting text-gray-600">Capturing this moment...</p>
               </div>
             </div>
           ) : (
@@ -60,7 +60,7 @@ function DiaryEntry({ entry, index }: DiaryEntryProps) {
               <img
                 src={entry.imageUrl}
                 alt="Generated from entry"
-                className="rounded-xl w-full h-full object-cover border border-amber-100"
+                className="rounded-xl w-full h-full object-cover border border-gray-200"
                 loading="lazy"
                 onError={(e) => {
                   console.error('Image failed to load:', entry.imageUrl);
@@ -79,8 +79,8 @@ function DiaryEntry({ entry, index }: DiaryEntryProps) {
             className="absolute inset-0 pointer-events-none rounded-xl -z-10"
             style={{
               backgroundImage: `
-                repeating-linear-gradient(transparent, transparent 31px, #f3d5b5 31px, #f3d5b5 32px),
-                linear-gradient(to right, #fbbf24 1px, transparent 1px)
+                repeating-linear-gradient(transparent, transparent 31px, #e5e7eb 31px, #e5e7eb 32px),
+                linear-gradient(to right, #9ca3af 1px, transparent 1px)
               `,
               backgroundSize: '100% 32px, 2px 100%',
               backgroundPosition: '0 8px, 32px 0'
@@ -89,7 +89,7 @@ function DiaryEntry({ entry, index }: DiaryEntryProps) {
           <div>
             {/* Author Style Attribution */}
             {entry.authorStyle && (
-              <p className="font-handwriting text-sm text-amber-600 italic mb-2 pl-10">
+              <p className="font-handwriting text-sm text-gray-600 italic mb-2 pl-10">
                 Written in the style of {entry.authorStyle}
               </p>
             )}
@@ -119,7 +119,7 @@ interface DiaryEntriesProps {
 
 export default function DiaryEntries({ entries }: DiaryEntriesProps) {
   return (
-    <div className="bg-[#fdfaf7] rounded-2xl shadow-lg border border-amber-100">
+    <div className="bg-gray-50 rounded-2xl shadow-lg border border-gray-200">
       <div>
         {entries.map((entry, index) => (
           <DiaryEntry key={entry.id} entry={entry} index={index} />

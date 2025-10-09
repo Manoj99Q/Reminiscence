@@ -22,6 +22,7 @@ export default function DiaryPage() {
   const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<{ message: string; isRateLimit?: boolean } | null>(null);
+  
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -101,6 +102,8 @@ export default function DiaryPage() {
     }
   };
 
+
+
   // Load entries when component mounts
   useEffect(() => {
     const loadEntries = async () => {
@@ -128,31 +131,52 @@ export default function DiaryPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Header */}
-      <header className="bg-white/70 backdrop-blur-sm sticky top-0 z-50 border-b border-amber-100">
+      <header className="bg-white/70 backdrop-blur-sm sticky top-0 z-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
-              <h1 className="text-3xl font-handwriting text-amber-800">Reminiscence</h1>
-              <span className="text-xs px-2 py-1 bg-amber-100 rounded-full text-amber-700">beta</span>
+              <h1 className="text-3xl font-handwriting text-gray-900">Reminiscence</h1>
+              <span className="text-xs px-2 py-1 bg-gray-200 rounded-full text-gray-700">beta</span>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <Link
+                href="/dashboard"
+                className="text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 whitespace-nowrap"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/diary"
+                className="text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors px-3 py-2 bg-gray-200 rounded-lg whitespace-nowrap"
+              >
+                Diary
+              </Link>
               <Link
                 href="/settings"
-                className="text-sm font-medium text-amber-700 hover:text-amber-900 transition-colors"
+                className="text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 whitespace-nowrap"
               >
                 Profile Settings
               </Link>
               <Link
                 href="/manage"
-                className="text-sm font-medium text-amber-700 hover:text-amber-900 transition-colors"
+                className="text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 whitespace-nowrap"
               >
                 Manage Entries
               </Link>
+              <Link
+                href="/NewEntry"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all font-medium text-xs whitespace-nowrap"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                New Entry
+              </Link>
               <button
                 onClick={handleLogout}
-                className="text-sm font-medium px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className="text-xs font-medium px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
               >
                 Logout
               </button>
@@ -166,39 +190,33 @@ export default function DiaryPage() {
         <div className="flex gap-8">
           {/* Left Side - Entry Form */}
           <div className="w-1/3 sticky top-24">
-            <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-amber-100">
+            <form onSubmit={handleSubmit} className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-gray-200">
               <div className="flex items-center justify-between mb-6">
                 <div>
-                  <h2 className="text-xl font-handwriting text-amber-800">New Memory</h2>
-                  <p className="text-xs text-amber-600 mt-1">Beta: Limited to 5 entries per week</p>
+                  <h2 className="text-xl font-handwriting text-gray-900">New Entry</h2>
+                  <p className="text-xs text-gray-600 mt-1">Beta: Limited to 5 entries per week</p>
                 </div>
                 {isSubmitting && (
-                  <span className="text-xs px-3 py-1 bg-amber-100 rounded-full text-amber-700 animate-pulse">
+                  <span className="text-xs px-3 py-1 bg-gray-200 rounded-full text-gray-700 animate-pulse">
                     Creating...
                   </span>
                 )}
               </div>
 
               {formError && (
-                <div className={`mb-6 p-4 rounded-xl ${formError.isRateLimit ? 'bg-amber-50 border-l-4 border-amber-400' : 'bg-red-50 border-l-4 border-red-400'}`}>
+                <div className={`mb-6 p-4 rounded-xl ${formError.isRateLimit ? 'bg-gray-100 border-l-4 border-gray-400' : 'bg-gray-100 border-l-4 border-gray-400'}`}>
                   <div className="flex">
                     <div className="flex-shrink-0">
-                      {formError.isRateLimit ? (
-                        <svg className="h-5 w-5 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                        </svg>
-                      )}
+                      <svg className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                      </svg>
                     </div>
                     <div className="ml-3">
-                      <p className={`text-sm ${formError.isRateLimit ? 'text-amber-800' : 'text-red-800'}`}>
+                      <p className="text-sm text-gray-800">
                         {formError.message}
                       </p>
                       {formError.isRateLimit && (
-                        <p className="text-xs text-amber-600 mt-1">
+                        <p className="text-xs text-gray-600 mt-1">
                           The limit will reset next week.
                         </p>
                       )}
@@ -209,7 +227,7 @@ export default function DiaryPage() {
 
               {/* Date Input */}
               <div className="mb-6">
-                <label htmlFor="entryDate" className="block text-sm font-medium text-amber-700 mb-2">
+                <label htmlFor="entryDate" className="block text-sm font-medium text-gray-700 mb-2">
                   When did this happen?
                 </label>
                 <input
@@ -217,12 +235,12 @@ export default function DiaryPage() {
                   id="entryDate"
                   value={entryDate}
                   onChange={(e) => setEntryDate(e.target.value)}
-                  className="w-full p-3 border border-amber-200 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all"
+                  className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white/50 backdrop-blur-sm transition-all"
                 />
               </div>
 
               <div className="mb-6">
-                <label htmlFor="content" className="block text-sm font-medium text-amber-700 mb-2">
+                <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
                   What's on your mind?
                 </label>
                 <textarea
@@ -230,14 +248,14 @@ export default function DiaryPage() {
                   value={newEntry}
                   onChange={(e) => setNewEntry(e.target.value)}
                   placeholder="Write your thoughts here..."
-                  className="w-full h-64 p-4 border border-amber-200 rounded-xl resize-none focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white/50 backdrop-blur-sm text-gray-800 placeholder:text-amber-300 transition-all"
+                  className="w-full h-64 p-4 border border-gray-300 rounded-xl resize-none focus:ring-2 focus:ring-gray-500 focus:border-transparent bg-white/50 backdrop-blur-sm text-gray-800 placeholder:text-gray-400 transition-all"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-6 py-3 bg-gradient-to-r from-amber-600 to-amber-700 text-white rounded-xl hover:from-amber-700 hover:to-amber-800 focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                className="w-full px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-800 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-medium"
               >
                 Capture This Moment
               </button>
@@ -250,6 +268,7 @@ export default function DiaryPage() {
           </div>
         </div>
       </div>
+
     </div>
   );
 } 

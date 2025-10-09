@@ -76,6 +76,7 @@ async function ensureIndexes(db: any) {
     } catch (error) {
       console.log('user_profiles collection does not exist yet, will create indexes when first document is inserted');
     }
+    
 
     // Check and create indexes for diary entries (only if collection exists)
     if (entriesIndexes.length > 0) {
@@ -133,6 +134,7 @@ async function ensureIndexes(db: any) {
         );
       }
     }
+
   } catch (error) {
     console.error('Error ensuring indexes:', error);
     // Don't throw - we can still operate without indexes

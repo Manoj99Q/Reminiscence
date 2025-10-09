@@ -77,7 +77,17 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-amber-50 py-12">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="mb-6">
+        <div className="mb-6 flex gap-4">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="text-amber-700 hover:text-amber-900 flex items-center gap-2 transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+            </svg>
+            <span>Dashboard</span>
+          </button>
           <button
             onClick={() => router.push('/diary')}
             className="text-amber-700 hover:text-amber-900 flex items-center gap-2 transition-colors"

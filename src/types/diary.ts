@@ -23,4 +23,4 @@ export interface DiaryEntryResponse {
   imagePrompt?: string;
   stylizedContent: string;  // The entry rewritten in an author's style
   authorStyle: string;  // The name and description of the chosen author style
-} 
+}
