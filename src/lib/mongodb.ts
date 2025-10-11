@@ -60,10 +60,12 @@ async function ensureIndexes(db: any) {
   try {
     const entriesCollection = db.collection('diary_entries');
     const profilesCollection = db.collection('user_profiles');
+    const newEntriesCollection = db.collection('new_entries');
     
     // Get existing indexes - handle case where collections don't exist yet
     let entriesIndexes = [];
     let profilesIndexes = [];
+    let newEntriesIndexes = [];
     
     try {
       entriesIndexes = await entriesCollection.indexes();
@@ -75,6 +77,12 @@ async function ensureIndexes(db: any) {
       profilesIndexes = await profilesCollection.indexes();
     } catch (error) {
       console.log('user_profiles collection does not exist yet, will create indexes when first document is inserted');
+    }
+    
+    try {
+      newEntriesIndexes = await newEntriesCollection.indexes();
+    } catch (error) {
+      console.log('new_entries collection does not exist yet, will create indexes when first document is inserted');
     }
     
 
@@ -133,6 +141,49 @@ async function ensureIndexes(db: any) {
           { background: true, unique: true }
         );
       }
+    }
+
+    // Check and create indexes for new entries (only if collection exists)
+    if (newEntriesIndexes.length > 0) {
+      const hasNewEntryDateIndex = newEntriesIndexes.some(
+        (index: any) => index.key && index.key.entryDate
+      );
+
+      if (!hasNewEntryDateIndex) {
+        console.log('Creating index on entryDate for new_entries...');
+        await newEntriesCollection.createIndex(
+          { entryDate: -1 },
+          { background: true }
+        );
+      }
+
+      const hasNewUserIdIndex = newEntriesIndexes.some(
+        (index: any) => index.key && index.key.userId
+      );
+
+      if (!hasNewUserIdIndex) {
+        console.log('Creating index on userId for new_entries...');
+        await newEntriesCollection.createIndex(
+          { userId: 1 },
+          { background: true }
+        );
+      }
+
+      const hasNewCompoundIndex = newEntriesIndexes.some(
+        (index: any) => 
+          index.key && 
+          index.key.userId && 
+          index.key.entryDate
+      );
+
+      if (!hasNewCompoundIndex) {
+        console.log('Creating compound index on userId + entryDate for new_entries...');
+        await newEntriesCollection.createIndex(
+          { userId: 1, entryDate: -1 },
+          { background: true }
+        );
+      }
+
     }
 
   } catch (error) {

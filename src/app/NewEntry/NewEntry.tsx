@@ -7,13 +7,15 @@ import Link from 'next/link';
 export default function NewEntry() {
   const [content, setContent] = useState('');
   const [entryDate, setEntryDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCollection, setSelectedCollection] = useState('');
   const [uploadedImage, setUploadedImage] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPrompt, setCurrentPrompt] = useState(0);
   const [photoMode, setPhotoMode] = useState<'manual' | 'ai'>('manual');
   const [locationMode, setLocationMode] = useState<'auto' | 'manual'>('auto');
   const [location, setLocation] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
@@ -27,13 +29,55 @@ export default function NewEntry() {
     "Is there anything else you'd like to remember about this moment?"
   ];
 
-  const categories = [
-    { id: 'personal', name: 'Personal', icon: '✨', color: 'bg-orange-100 border-orange-200 hover:bg-orange-50' },
-    { id: 'work', name: 'Work', icon: '💼', color: 'bg-amber-100 border-amber-200 hover:bg-amber-50' },
-    { id: 'health', name: 'Health', icon: '🏃', color: 'bg-green-100 border-green-200 hover:bg-green-50' },
-    { id: 'travel', name: 'Travel', icon: '✈️', color: 'bg-blue-100 border-blue-200 hover:bg-blue-50' },
-    { id: 'relationships', name: 'Relationships', icon: '❤️', color: 'bg-red-100 border-red-200 hover:bg-red-50' },
-    { id: 'gratitude', name: 'Gratitude', icon: '🙏', color: 'bg-purple-100 border-purple-200 hover:bg-purple-50' }
+  const journalCollections = [
+    { 
+      id: 'daily-thoughts', 
+      name: 'Daily Thoughts', 
+      icon: '📖', 
+      color: 'bg-blue-100 border-blue-200 hover:bg-blue-50',
+      description: 'My daily reflections and experiences',
+      entries: 12
+    },
+    { 
+      id: 'travel-diary', 
+      name: 'Travel Diary', 
+      icon: '✈️', 
+      color: 'bg-green-100 border-green-200 hover:bg-green-50',
+      description: 'Adventures and memories from my travels',
+      entries: 8
+    },
+    { 
+      id: 'dream-log', 
+      name: 'Dream Log', 
+      icon: '🌙', 
+      color: 'bg-purple-100 border-purple-200 hover:bg-purple-50',
+      description: 'Recording my dreams and aspirations',
+      entries: 15
+    },
+    { 
+      id: 'gratitude-log', 
+      name: 'Gratitude Log', 
+      icon: '🙏', 
+      color: 'bg-orange-100 border-orange-200 hover:bg-orange-50',
+      description: 'Things I\'m grateful for each day',
+      entries: 25
+    },
+    { 
+      id: 'family-memories', 
+      name: 'Family Memories', 
+      icon: '❤️', 
+      color: 'bg-pink-100 border-pink-200 hover:bg-pink-50',
+      description: 'Special moments with loved ones',
+      entries: 18
+    },
+    { 
+      id: 'creative-ideas', 
+      name: 'Creative Ideas', 
+      icon: '💡', 
+      color: 'bg-indigo-100 border-indigo-200 hover:bg-indigo-50',
+      description: 'Inspiration and creative thoughts',
+      entries: 6
+    }
   ];
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,16 +87,93 @@ export default function NewEntry() {
     }
   };
 
+  const generateImageFromText = async () => {
+    if (!content.trim()) {
+      alert('Please write some content first to generate an image');
+      return;
+    }
+
+    setIsGenerating(true);
+    try {
+      // Extract keywords from content for image prompt
+      const keywords = content.toLowerCase().split(' ').filter((word: string) => 
+        word.length > 3 && 
+        !['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'its', 'may', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'man', 'oil', 'sit', 'try', 'use', 'war', 'why', 'yes', 'yet', 'you'].includes(word)
+      );
+      
+      const mainKeyword = keywords[0] || 'nature';
+      const imagePrompt = `A beautiful artistic image related to ${mainKeyword}, dreamy scene with soft lighting and gentle artistic touches`;
+
+      const response = await fetch('/api/new-entry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: imagePrompt }),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to generate image');
+      }
+
+      const data = await response.json();
+      setGeneratedImage(data.imageUrl);
+    } catch (error) {
+      console.error('Error generating image:', error);
+      alert('Failed to generate image. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const logDataWithImage = () => {
+    // Find the selected collection details
+    const selectedCollectionDetails = journalCollections.find(
+      collection => collection.id === selectedCollection
+    );
+    
+    const logData = {
+      content,
+      entryDate,
+      selectedCollection: selectedCollectionDetails ? {
+        id: selectedCollection,
+        name: selectedCollectionDetails.name,
+        icon: selectedCollectionDetails.icon,
+        description: selectedCollectionDetails.description
+      } : null,
+      location,
+      photoMode,
+      generatedImage: generatedImage || null,
+      uploadedImage: uploadedImage ? uploadedImage.name : null,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('📝 Entry Data with Generated Image:', logData);
+    alert('Data logged to console! Check browser developer tools.');
+  };
+
   const handlePromptContinue = () => {
     if (content.trim().length > 50 && currentPrompt < prompts.length - 1) {
       setCurrentPrompt(currentPrompt + 1);
     }
   };
 
-  const getCurrentLocation = () => {
+  const getCurrentLocation = async () => {
     if (!navigator.geolocation) {
-      setLocation('Location not supported');
+      setLocation('Location not supported by this browser');
       return;
+    }
+
+    // Check if geolocation permission is already denied
+    if (navigator.permissions) {
+      try {
+        const permission = await navigator.permissions.query({ name: 'geolocation' });
+        if (permission.state === 'denied') {
+          setLocation('Location access denied - Please enable in browser settings');
+          return;
+        }
+      } catch (permissionError) {
+        // Permission API not supported, continue with geolocation request
+      }
     }
 
     // Set loading state
@@ -64,25 +185,25 @@ export default function NewEntry() {
         setLocation(`Lat: ${position.coords.latitude.toFixed(4)}, Lng: ${position.coords.longitude.toFixed(4)}`);
       },
       (error) => {
-        console.error('Geolocation error:', error);
+        // Handle error gracefully without logging to console
         switch (error.code) {
           case error.PERMISSION_DENIED:
-            setLocation('Location access denied');
+            setLocation('Location access denied - Click retry to try again');
             break;
           case error.POSITION_UNAVAILABLE:
-            setLocation('Location unavailable');
+            setLocation('Location unavailable - Please check your GPS');
             break;
           case error.TIMEOUT:
-            setLocation('Location request timeout');
+            setLocation('Location request timeout - Please try again');
             break;
           default:
-            setLocation('Location detection failed');
+            setLocation('Location detection failed - Please try again');
             break;
         }
       },
       {
         enableHighAccuracy: true,
-        timeout: 10000,
+        timeout: 15000, // Increased timeout
         maximumAge: 300000 // 5 minutes
       }
     );
@@ -108,41 +229,68 @@ export default function NewEntry() {
     if (!content.trim() || isSubmitting) return;
 
     setIsSubmitting(true);
-    
-    try {
-      const formData = new FormData();
-      formData.append('content', content.trim());
-      formData.append('entryDate', new Date(entryDate).toISOString());
-      formData.append('category', selectedCategory);
-      
-      if (uploadedImage) {
-        formData.append('image', uploadedImage);
-      }
 
-      const response = await fetch('/api/entries', {
+    try {
+      // Find the selected collection details
+      const selectedCollectionDetails = journalCollections.find(
+        collection => collection.id === selectedCollection
+      );
+
+      // Prepare the data for submission with logData fields
+      const entryData = {
+        content: content.trim(),
+        entryDate,
+        selectedCollection: selectedCollectionDetails ? {
+          id: selectedCollection,
+          name: selectedCollectionDetails.name,
+          icon: selectedCollectionDetails.icon,
+          description: selectedCollectionDetails.description
+        } : null,
+        location: location || null,
+        photoMode,
+        generatedImage: generatedImage || null,
+        uploadedImage: uploadedImage ? uploadedImage.name : null,
+      };
+
+      console.log('📝 Submitting entry data:', entryData);
+
+      // Submit to the new API endpoint
+      const response = await fetch('/api/new-entry', {
         method: 'POST',
-        credentials: 'include',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entryData),
+        credentials: 'include'
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to create entry');
+        if (response.status === 401) {
+          router.push('/login');
+          return;
+        }
+        throw new Error(data.error || 'Failed to create entry');
       }
 
-      // Reset form
-      setContent('');
-      setSelectedCategory('');
-      setUploadedImage(null);
-      setCurrentPrompt(0);
-      setEntryDate(new Date().toISOString().split('T')[0]);
+      console.log('✅ Entry created successfully:', data);
       
-      // Show success message and redirect
+      // Show success message
       alert('Entry created successfully!');
-      router.push('/manage');
       
-    } catch (error) {
+      // Clear the form
+      setContent('');
+      setSelectedCollection('');
+      setLocation('');
+      setUploadedImage(null);
+      setGeneratedImage(null);
+      setCurrentPrompt(0);
+      
+      // Optionally redirect to manage page
+      // router.push('/manage');
+      
+    } catch (error: any) {
       console.error('Error creating entry:', error);
-      alert('Failed to create entry. Please try again.');
+      alert(`Error creating entry: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -348,36 +496,86 @@ export default function NewEntry() {
                   )}
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50">
-                  <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center mx-auto mb-2">
-                    <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <p className="text-gray-700 font-medium text-xs">AI will generate an image</p>
-                  <p className="text-xs text-gray-500">Powered by AI</p>
+                <div className="space-y-3">
+                  {generatedImage ? (
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <img
+                          src={generatedImage}
+                          alt="AI Generated"
+                          className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setGeneratedImage(null)}
+                          className="absolute top-2 right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={generateImageFromText}
+                          disabled={isGenerating}
+                          className="flex-1 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 text-xs font-medium"
+                        >
+                          {isGenerating ? 'Generating...' : 'Regenerate'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={logDataWithImage}
+                          className="flex-1 px-3 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 text-xs font-medium"
+                        >
+                          Log Data
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center bg-gray-50">
+                      <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center mx-auto mb-2">
+                        <svg className="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <p className="text-gray-700 font-medium text-xs mb-2">AI will generate an image</p>
+                      <p className="text-xs text-gray-500 mb-3">Powered by AI</p>
+                      <button
+                        type="button"
+                        onClick={generateImageFromText}
+                        disabled={isGenerating || !content.trim()}
+                        className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                      >
+                        {isGenerating ? 'Generating...' : 'Generate Image'}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {/* Category Selection */}
+            {/* Journal Collection Selection */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">Select Category</h3>
-              <div className="grid grid-cols-3 gap-3">
-                {categories.map((category) => (
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Select Journal Collection</h3>
+              <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                {journalCollections.map((collection) => (
                   <button
-                    key={category.id}
+                    key={collection.id}
                     type="button"
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`p-3 rounded-xl border-2 transition-all ${
-                      selectedCategory === category.id
+                    onClick={() => setSelectedCollection(collection.id)}
+                    className={`flex-shrink-0 w-64 p-4 rounded-xl border-2 transition-all text-left ${
+                      selectedCollection === collection.id
                         ? 'border-gray-500 bg-gray-50'
-                        : category.color
+                        : collection.color
                     }`}
                   >
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="text-xl">{category.icon}</span>
-                      <span className="font-medium text-gray-700 text-xs">{category.name}</span>
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">{collection.icon}</span>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-gray-900 text-sm mb-1">{collection.name}</h4>
+                        <p className="text-xs text-gray-600 mb-2">{collection.description}</p>
+                        <span className="text-xs text-gray-500">{collection.entries} entries</span>
+                      </div>
                     </div>
                   </button>
                 ))}

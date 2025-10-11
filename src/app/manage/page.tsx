@@ -160,12 +160,6 @@ export default function ManagePage() {
                 Manage Entries
               </Link>
               <Link
-                href="/dashboard/list of gournal"
-                className="text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 whitespace-nowrap"
-              >
-                All Journals
-              </Link>
-              <Link
                 href="/NewEntry"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all font-medium text-xs whitespace-nowrap"
               >

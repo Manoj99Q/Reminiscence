@@ -25,10 +25,10 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: 'Reminiscence | Your Personal Memory Journal',
+  title: 'Reminiscence | Your Personal Memory Diary',
   description: 'Capture and preserve your memories with AI-generated illustrations',
   applicationName: 'Reminiscence',
-  keywords: ['diary', 'journal', 'memories', 'AI', 'personal'],
+  keywords: ['diary', 'memories', 'AI', 'personal', 'entries'],
   authors: [{ name: 'Reminiscence Team' }],
   icons: {
     icon: { url: '/logo.png', type: 'image/png' },

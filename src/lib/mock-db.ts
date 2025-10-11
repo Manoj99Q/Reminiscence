@@ -52,10 +52,29 @@ interface MockUserProfile {
   updatedAt: Date;
 }
 
+interface MockNewEntry {
+  _id: string;
+  userId: string;
+  content: string;
+  entryDate: Date;
+  selectedCollection?: {
+    id: string;
+    name: string;
+    icon: string;
+    description: string;
+  };
+  location?: string;
+  photoMode: 'manual' | 'ai';
+  generatedImage?: string;
+  uploadedImage?: string;
+  timestamp: string;
+}
+
 class MockDatabase {
   private users: MockUser[] = [];
   private diaryEntries: MockDiaryEntry[] = [];
   private userProfiles: MockUserProfile[] = [];
+  private newEntries: MockNewEntry[] = [];
   private nextId = 1;
 
 
@@ -192,6 +211,8 @@ class MockDatabase {
       this.diaryEntries = filtered as MockDiaryEntry[];
     } else if (collection === this.userProfiles) {
       this.userProfiles = filtered as MockUserProfile[];
+    } else if (collection === this.newEntries) {
+      this.newEntries = filtered as MockNewEntry[];
     }
     
     return { deletedCount: initialLength - filtered.length };
@@ -205,6 +226,8 @@ class MockDatabase {
         return this.diaryEntries;
       case 'user_profiles':
         return this.userProfiles;
+      case 'new_entries':
+        return this.newEntries;
       default:
         return null;
     }

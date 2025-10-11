@@ -54,12 +54,6 @@ export default function DashboardPage() {
                 Manage Entries
               </Link>
               <Link
-                href="/dashboard/list of gournal"
-                className="text-xs font-medium text-gray-700 hover:text-gray-900 transition-colors px-3 py-2 rounded-lg hover:bg-gray-100 whitespace-nowrap"
-              >
-                All Journals
-              </Link>
-              <Link
                 href="/NewEntry"
                 className="inline-flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all font-medium text-xs whitespace-nowrap"
               >
@@ -82,11 +76,11 @@ export default function DashboardPage() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-16">
         <div className="mb-8">
-          {/* Journals Grid */}
+          {/* Collections Grid */}
           <div className="mb-8">
-            <h3 className="text-2xl font-handwriting text-gray-900 mb-6">My Journals</h3>
+            <h3 className="text-2xl font-handwriting text-gray-900 mb-6">My Collections</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {/* Dummy Journal Entries */}
+              {/* Dummy Collection Entries */}
               <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-6 border border-gray-200">
                 <div className="aspect-square bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg mb-4 flex items-center justify-center">
                   <div className="text-center">
@@ -139,10 +133,10 @@ export default function DashboardPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                       </svg>
                     </div>
-                    <p className="text-sm text-purple-700 font-medium">Dream Journal</p>
+                    <p className="text-sm text-purple-700 font-medium">Dream Log</p>
                   </div>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Dream Journal</h4>
+                <h4 className="font-semibold text-gray-900 mb-2">Dream Log</h4>
                 <p className="text-sm text-gray-600 mb-3">Recording my dreams and aspirations</p>
                 <div className="flex justify-between items-center text-xs text-gray-500 mb-3">
                   <span>15 entries</span>
@@ -219,7 +213,7 @@ export default function DashboardPage() {
                 </button>
               </div>
 
-              {/* Add New Journal Card */}
+              {/* Add New Collection Card */}
               <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 p-6 border-2 border-dashed border-gray-300 hover:border-gray-400 cursor-pointer">
                 <div className="aspect-square bg-gradient-to-br from-gray-100 to-gray-200 rounded-lg mb-4 flex items-center justify-center">
                   <div className="text-center">
@@ -231,8 +225,8 @@ export default function DashboardPage() {
                     <p className="text-sm text-gray-600 font-medium">Create New</p>
                   </div>
                 </div>
-                <h4 className="font-semibold text-gray-900 mb-2">Create New Journal</h4>
-                <p className="text-sm text-gray-600 mb-3">Start a new journal collection</p>
+                <h4 className="font-semibold text-gray-900 mb-2">Create New Collection</h4>
+                <p className="text-sm text-gray-600 mb-3">Start a new collection</p>
                 <div className="flex justify-center">
                   <span className="text-xs text-gray-500">Click to create</span>
                 </div>
