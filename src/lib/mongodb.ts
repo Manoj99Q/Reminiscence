@@ -61,11 +61,13 @@ async function ensureIndexes(db: any) {
     const entriesCollection = db.collection('diary_entries');
     const profilesCollection = db.collection('user_profiles');
     const newEntriesCollection = db.collection('new_entries');
+    const analysesCollection = db.collection('ai_analyses');
     
     // Get existing indexes - handle case where collections don't exist yet
     let entriesIndexes = [];
     let profilesIndexes = [];
     let newEntriesIndexes = [];
+    let analysesIndexes = [];
     
     try {
       entriesIndexes = await entriesCollection.indexes();
@@ -83,6 +85,12 @@ async function ensureIndexes(db: any) {
       newEntriesIndexes = await newEntriesCollection.indexes();
     } catch (error) {
       console.log('new_entries collection does not exist yet, will create indexes when first document is inserted');
+    }
+    
+    try {
+      analysesIndexes = await analysesCollection.indexes();
+    } catch (error) {
+      console.log('ai_analyses collection does not exist yet, will create indexes when first document is inserted');
     }
     
 
@@ -184,6 +192,60 @@ async function ensureIndexes(db: any) {
         );
       }
 
+    }
+
+    // Check and create indexes for AI analyses (only if collection exists)
+    if (analysesIndexes.length > 0) {
+      const hasAnalysisUserIdIndex = analysesIndexes.some(
+        (index: any) => index.key && index.key.userId
+      );
+
+      if (!hasAnalysisUserIdIndex) {
+        console.log('Creating index on userId for ai_analyses...');
+        await analysesCollection.createIndex(
+          { userId: 1 },
+          { background: true }
+        );
+      }
+
+      const hasAnalysisCreatedAtIndex = analysesIndexes.some(
+        (index: any) => index.key && index.key.createdAt
+      );
+
+      if (!hasAnalysisCreatedAtIndex) {
+        console.log('Creating index on createdAt for ai_analyses...');
+        await analysesCollection.createIndex(
+          { createdAt: -1 },
+          { background: true }
+        );
+      }
+
+      const hasAnalysisEntryIdIndex = analysesIndexes.some(
+        (index: any) => index.key && index.key.entryId
+      );
+
+      if (!hasAnalysisEntryIdIndex) {
+        console.log('Creating index on entryId for ai_analyses...');
+        await analysesCollection.createIndex(
+          { entryId: 1 },
+          { background: true }
+        );
+      }
+
+      const hasAnalysisCompoundIndex = analysesIndexes.some(
+        (index: any) => 
+          index.key && 
+          index.key.userId && 
+          index.key.createdAt
+      );
+
+      if (!hasAnalysisCompoundIndex) {
+        console.log('Creating compound index on userId + createdAt for ai_analyses...');
+        await analysesCollection.createIndex(
+          { userId: 1, createdAt: -1 },
+          { background: true }
+        );
+      }
     }
 
   } catch (error) {

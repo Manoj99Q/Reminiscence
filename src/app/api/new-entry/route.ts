@@ -143,6 +143,32 @@ export async function POST(request: NextRequest) {
     const result = await newEntryCollection.insertOne(entry);
     console.log('POST /api/new-entry - Entry inserted successfully:', result.insertedId);
     
+    // Trigger AI analysis for the new entry
+    try {
+      console.log('POST /api/new-entry - Triggering AI analysis');
+      const analysisResponse = await fetch(`${request.url.replace('/api/new-entry', '/api/ai-analysis')}`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Cookie': request.headers.get('cookie') || ''
+        },
+        body: JSON.stringify({ 
+          content: content.trim(),
+          entryId: result.insertedId.toString()
+        }),
+      });
+      
+      if (analysisResponse.ok) {
+        const analysisData = await analysisResponse.json();
+        console.log('POST /api/new-entry - AI analysis completed:', analysisData.id);
+      } else {
+        console.log('POST /api/new-entry - AI analysis failed, but entry was saved');
+      }
+    } catch (analysisError) {
+      console.error('POST /api/new-entry - Error triggering AI analysis:', analysisError);
+      // Don't fail the entry creation if analysis fails
+    }
+    
     // Format response with logData structure
     const formattedEntry = {
       id: result.insertedId.toString(),

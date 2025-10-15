@@ -70,11 +70,28 @@ interface MockNewEntry {
   timestamp: string;
 }
 
+interface MockAIAnalysis {
+  _id: string;
+  userId: string;
+  entryId?: string;
+  content: string;
+  analysis: {
+    reflection: string;
+    keyInsights: string[];
+    feelings: string[];
+    people: string[];
+    mood: 'positive' | 'neutral' | 'negative';
+  };
+  createdAt: Date;
+  timestamp: string;
+}
+
 class MockDatabase {
   private users: MockUser[] = [];
   private diaryEntries: MockDiaryEntry[] = [];
   private userProfiles: MockUserProfile[] = [];
   private newEntries: MockNewEntry[] = [];
+  private aiAnalyses: MockAIAnalysis[] = [];
   private nextId = 1;
 
 
@@ -82,12 +99,16 @@ class MockDatabase {
     return {
       findOne: (query: any) => this.findOneWithCollection(name, query),
       find: (query: any) => {
-        const results = this.findWithCollection(name, query);
         return {
           sort: (sortOptions: any) => ({
-            toArray: () => Promise.resolve(this.addSortToFind(results, sortOptions))
+            toArray: async () => {
+              const results = await this.findWithCollection(name, query);
+              return this.addSortToFind(results, sortOptions);
+            }
           }),
-          toArray: () => Promise.resolve(results)
+          toArray: async () => {
+            return await this.findWithCollection(name, query);
+          }
         };
       },
       insertOne: (item: any) => this.insertOneWithCollection(name, item),
@@ -213,6 +234,8 @@ class MockDatabase {
       this.userProfiles = filtered as MockUserProfile[];
     } else if (collection === this.newEntries) {
       this.newEntries = filtered as MockNewEntry[];
+    } else if (collection === this.aiAnalyses) {
+      this.aiAnalyses = filtered as MockAIAnalysis[];
     }
     
     return { deletedCount: initialLength - filtered.length };
@@ -228,6 +251,25 @@ class MockDatabase {
         return this.userProfiles;
       case 'new_entries':
         return this.newEntries;
+      case 'ai_analyses':
+        return this.aiAnalyses;
+      case 'manage_entries':
+        // Return combined entries for manage page
+        return this.newEntries.map(entry => {
+          const analysis = this.aiAnalyses.find(a => a.entryId === entry._id);
+          return {
+            ...entry,
+            aiAnalysis: analysis ? {
+              id: analysis._id,
+              reflection: analysis.analysis.reflection,
+              keyInsights: analysis.analysis.keyInsights,
+              feelings: analysis.analysis.feelings,
+              people: analysis.analysis.people,
+              mood: analysis.analysis.mood,
+              createdAt: analysis.createdAt.toISOString()
+            } : null
+          };
+        });
       default:
         return null;
     }

@@ -6,10 +6,28 @@ import { DiaryEntryResponse } from '@/types/diary';
 import Link from 'next/link';
 import DetailEntry from './DetailEntry';
 
+// Extended interface to include AI analysis data
+interface ManageEntryResponse extends DiaryEntryResponse {
+  selectedCollection?: any;
+  location?: string;
+  photoMode?: string;
+  generatedImage?: string;
+  uploadedImage?: string;
+  aiAnalysis?: {
+    id: string;
+    reflection: string;
+    keyInsights: string[];
+    feelings: string[];
+    people: string[];
+    mood: 'positive' | 'neutral' | 'negative';
+    createdAt: string;
+  } | null;
+}
+
 export default function ManagePage() {
-  const [entries, setEntries] = useState<DiaryEntryResponse[]>([]);
-  const [filteredEntries, setFilteredEntries] = useState<DiaryEntryResponse[]>([]);
-  const [selectedEntry, setSelectedEntry] = useState<DiaryEntryResponse | null>(null);
+  const [entries, setEntries] = useState<ManageEntryResponse[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<ManageEntryResponse[]>([]);
+  const [selectedEntry, setSelectedEntry] = useState<ManageEntryResponse | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -36,7 +54,7 @@ export default function ManagePage() {
   const loadEntries = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/entries', {
+      const response = await fetch('/api/manage-entries', {
         credentials: 'include',
       });
       
