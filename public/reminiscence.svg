@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- Background Circle -->
+  <circle cx="256" cy="256" r="248" fill="#f59e0b" opacity="0.1" />
+  <circle cx="256" cy="256" r="224" fill="#f59e0b" opacity="0.2" />
+  
+  <!-- Letter R with memory trail effect -->
+  <g transform="translate(256 256) scale(1.8) translate(-256 -256)">
+    <path d="M200 150 
+             L200 350 
+             M200 150 
+             C200 150 300 150 300 200 
+             C300 250 200 250 200 250
+             L300 350" 
+          stroke="#f59e0b" 
+          stroke-width="24" 
+          stroke-linecap="round" 
+          fill="none"
+          opacity="0.9">
+      <animate attributeName="stroke-dasharray" 
+               from="0,1000" 
+               to="1000,0" 
+               dur="3s" 
+               repeatCount="indefinite" />
+    </path>
+  </g>
+</svg> 

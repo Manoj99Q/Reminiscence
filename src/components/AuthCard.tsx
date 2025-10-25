@@ -1,0 +1,80 @@
+import React from 'react';
+import Link from 'next/link';
+
+interface AuthCardProps {
+  title: string;
+  error?: string;
+  children: React.ReactNode;
+  footer: {
+    text: string;
+    linkText: string;
+    linkHref: string;
+    onClick?: () => void;
+  };
+}
+
+export default function AuthCard({ title, error, children, footer }: AuthCardProps) {
+  return (
+    <main className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 via-white to-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full">
+        {/* Card Container */}
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl p-8 space-y-8 border border-gray-200/50">
+          {/* Logo/Brand Section */}
+          <div className="text-center">
+            <div className="mx-auto h-20 w-20 bg-black rounded-full flex items-center justify-center shadow-lg">
+              <svg className="h-10 w-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
+            <h2 className="mt-6 text-3xl font-bold text-gray-900">
+              {title}
+            </h2>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="bg-gray-100 border-l-4 border-gray-400 p-4 rounded-lg">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-gray-800">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Form Content */}
+          <div className="space-y-6">
+            {children}
+          </div>
+
+          {/* Footer */}
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              {footer.text}{' '}
+              {footer.onClick ? (
+                <button
+                  onClick={footer.onClick}
+                  className="font-medium text-gray-900 hover:text-black transition-colors duration-200 underline decoration-gray-400 hover:decoration-gray-600 cursor-pointer bg-transparent border-none"
+                >
+                  {footer.linkText}
+                </button>
+              ) : (
+                <Link 
+                  href={footer.linkHref} 
+                  className="font-medium text-gray-900 hover:text-black transition-colors duration-200 underline decoration-gray-400 hover:decoration-gray-600"
+                >
+                  {footer.linkText}
+                </Link>
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+} 
